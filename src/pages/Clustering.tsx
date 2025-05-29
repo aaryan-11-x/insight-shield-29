@@ -1,112 +1,132 @@
 
-import { useState } from "react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 
-const clusterData = [
-  { service: "Service/Product A", cveCount: 10, severity: "High" },
-  { service: "Service/Product B", cveCount: 7, severity: "Medium" },
-  { service: "Service/Product C", cveCount: 15, severity: "Critical" },
-  { service: "Service/Product D", cveCount: 3, severity: "Low" },
+const vulnerabilityByHostData = [
+  { host: "192.168.1.10", vulnerabilities: 45 },
+  { host: "192.168.1.25", vulnerabilities: 38 },
+  { host: "192.168.1.33", vulnerabilities: 42 },
+  { host: "192.168.1.15", vulnerabilities: 29 },
+  { host: "192.168.1.50", vulnerabilities: 33 },
+  { host: "192.168.1.67", vulnerabilities: 25 },
+  { host: "192.168.1.89", vulnerabilities: 31 },
+];
+
+const vulnerabilityByProductData = [
+  { product: "Apache HTTP Server", vulnerabilities: 156, color: "#dc2626" },
+  { product: "MySQL Database", vulnerabilities: 134, color: "#ea580c" },
+  { product: "Node.js Runtime", vulnerabilities: 98, color: "#ca8a04" },
+  { product: "Nginx Web Server", vulnerabilities: 87, color: "#16a34a" },
+  { product: "PHP Framework", vulnerabilities: 76, color: "#2563eb" },
+  { product: "OpenSSL Library", vulnerabilities: 65, color: "#9333ea" },
+];
+
+const vulnerabilityOverviewData = [
+  { metric: "Total Vulnerabilities", value: 1247, percentage: "100%" },
+  { metric: "Critical Severity", value: 89, percentage: "7.1%" },
+  { metric: "High Severity", value: 234, percentage: "18.8%" },
+  { metric: "Medium Severity", value: 567, percentage: "45.5%" },
+  { metric: "Low Severity", value: 357, percentage: "28.6%" },
+  { metric: "Unique CVEs", value: 456, percentage: "36.6%" },
+  { metric: "Affected Hosts", value: 125, percentage: "N/A" },
+  { metric: "Products/Services", value: 23, percentage: "N/A" },
 ];
 
 export default function Clustering() {
-  const [selectedCluster, setSelectedCluster] = useState<string | null>(null);
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
-        <p className="text-muted-foreground">Group vulnerabilities by service, product, and impact</p>
+        <h1 className="text-3xl font-bold">Operational Insights</h1>
+        <p className="text-muted-foreground">Vulnerability clustering and distribution analysis</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Cluster Visualization */}
+        {/* Vulnerability Distribution by Host (3.1) */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Vulnerability Distribution Map</h3>
-          <div className="h-96 relative">
-            {/* Tree map style visualization */}
-            <div className="grid grid-cols-4 grid-rows-4 gap-2 h-full">
-              <div className="col-span-2 row-span-2 bg-red-500/20 border-2 border-red-500/50 rounded-lg flex items-center justify-center">
-                <span className="text-sm font-medium">Critical Services</span>
-              </div>
-              <div className="bg-yellow-500/20 border-2 border-yellow-500/50 rounded-lg flex items-center justify-center">
-                <span className="text-xs">Web Apps</span>
-              </div>
-              <div className="bg-green-500/20 border-2 border-green-500/50 rounded-lg flex items-center justify-center">
-                <span className="text-xs">Databases</span>
-              </div>
-              <div className="col-span-2 bg-orange-500/20 border-2 border-orange-500/50 rounded-lg flex items-center justify-center">
-                <span className="text-sm">Infrastructure</span>
-              </div>
-              <div className="row-span-2 bg-blue-500/20 border-2 border-blue-500/50 rounded-lg flex items-center justify-center">
-                <span className="text-sm">APIs</span>
-              </div>
-              <div className="bg-purple-500/20 border-2 border-purple-500/50 rounded-lg flex items-center justify-center">
-                <span className="text-xs">Legacy</span>
-              </div>
-            </div>
+          <h3 className="text-lg font-semibold mb-4">Vulnerability Distribution by Host (3.1)</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={vulnerabilityByHostData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="host" stroke="#9ca3af" fontSize={12} />
+                <YAxis stroke="#9ca3af" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "#1f2937", 
+                    border: "1px solid #374151",
+                    borderRadius: "8px"
+                  }} 
+                />
+                <Bar dataKey="vulnerabilities" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Drill-down Modal */}
+        {/* Vulnerability Distribution by Product/Service (3.2) */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Service Analysis</h3>
-          <div className="space-y-4">
-            <div className="p-4 bg-muted/20 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-medium">Service / Product A</h4>
-                <span className="text-lg font-bold">10</span>
+          <h3 className="text-lg font-semibold mb-4">Vulnerability Distribution by Product/Service (3.2)</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={vulnerabilityByProductData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={120}
+                  paddingAngle={5}
+                  dataKey="vulnerabilities"
+                >
+                  {vulnerabilityByProductData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: "#1f2937", 
+                    border: "1px solid #374151",
+                    borderRadius: "8px"
+                  }} 
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+            {vulnerabilityByProductData.map((item, index) => (
+              <div key={index} className="flex items-center gap-2 text-xs">
+                <div 
+                  className="w-3 h-3 rounded-full" 
+                  style={{ backgroundColor: item.color }}
+                />
+                <span>{item.product}</span>
               </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full" />
-                  <span className="text-sm">Apache HTTP Server</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full" />
-                  <span className="text-sm">OpenSSL Library</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* CVE Count by Service */}
+      {/* Vulnerability Overview Table (3.3) */}
       <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">CVE Count by Service/Product</h3>
+        <h3 className="text-lg font-semibold mb-4">Vulnerability Overview (3.3)</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-3 px-4">Service/Product</th>
-                <th className="text-left py-3 px-4">CVE Count</th>
-                <th className="text-left py-3 px-4">Severity</th>
-                <th className="text-left py-3 px-4">Actions</th>
+                <th className="text-left py-3 px-4">Metric</th>
+                <th className="text-center py-3 px-4">Value</th>
+                <th className="text-center py-3 px-4">Percentage</th>
               </tr>
             </thead>
             <tbody>
-              {clusterData.map((item, index) => (
+              {vulnerabilityOverviewData.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="py-3 px-4">{item.service}</td>
-                  <td className="py-3 px-4 font-bold">{item.cveCount}</td>
-                  <td className="py-3 px-4">
-                    <Badge variant={
-                      item.severity === "Critical" ? "destructive" : 
-                      item.severity === "High" ? "default" : 
-                      item.severity === "Medium" ? "secondary" : 
-                      "outline"
-                    }>
-                      {item.severity}
+                  <td className="py-3 px-4 font-medium">{item.metric}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.value.toLocaleString()}</td>
+                  <td className="py-3 px-4 text-center">
+                    <Badge variant={item.percentage === "N/A" ? "secondary" : "default"}>
+                      {item.percentage}
                     </Badge>
-                  </td>
-                  <td className="py-3 px-4">
-                    <button 
-                      className="text-primary hover:underline text-sm"
-                      onClick={() => setSelectedCluster(item.service)}
-                    >
-                      View Details
-                    </button>
                   </td>
                 </tr>
               ))}
