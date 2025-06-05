@@ -30,6 +30,10 @@ const menuItems = [
     icon: Target,
     subItems: [
       {
+        title: "Overall Summary",
+        url: "/prioritization",
+      },
+      {
         title: "Exploitability Scoring",
         url: "/exploitability",
       },
@@ -72,8 +76,8 @@ const menuItems = [
     icon: Grid2x2,
     subItems: [
       {
-        title: "IP Insights",
-        url: "/ip-insights",
+        title: "IP Summary",
+        url: "/ip-summary",
       },
       {
         title: "Vulnerability Clustering",
@@ -90,6 +94,10 @@ const menuItems = [
     url: "/management",
     icon: TrendingUp,
     subItems: [
+      {
+        title: "Risk Summary",
+        url: "/risk-summary",
+      },
       {
         title: "CVE Summary",
         url: "/cve-summary",
@@ -109,6 +117,10 @@ const menuItems = [
     url: "/seol",
     icon: AlertTriangle,
     subItems: [
+      {
+        title: "EoL Summary",
+        url: "/eol-summary",
+      },
       {
         title: "EoL Components",
         url: "/eol-components",
