@@ -1,3 +1,4 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -16,10 +17,10 @@ const exploitabilityDistData = [
 ];
 
 const ageDistributionData = [
-  { name: "0-30 days", value: 120 },
-  { name: "31-90 days", value: 340 },
-  { name: "91-180 days", value: 280 },
-  { name: "180+ days", value: 160 },
+  { name: "0-30 days", value: 0 },
+  { name: "31-90 days", value: 85 },
+  { name: "91-180 days", value: 170 },
+  { name: "180+ days", value: 340 },
 ];
 
 const topHostsData = [
@@ -35,9 +36,10 @@ const scoringMetrics = [
   { metric: "EPSS", critical: 363, high: 38, medium: 14, low: 47 },
   { metric: "VPR", critical: 3972, high: 241, medium: 2559, low: 55 },
   { metric: "CISA KEV", critical: 54, high: 0, medium: 0, low: 0 },
+  { metric: "TOTAL", critical: 4425, high: 2575, medium: 4660, low: 137 },
 ];
 
-// Transform scoring metrics for chart
+// Transform scoring metrics for chart (excluding TOTAL row)
 const scoringMetricsChartData = [
   { metric: "CVSS", Critical: 36, High: 2296, Medium: 2087, Low: 35 },
   { metric: "EPSS", Critical: 363, High: 38, Medium: 14, Low: 47 },
@@ -105,7 +107,7 @@ export default function Prioritization() {
             </thead>
             <tbody>
               {scoringMetrics.map((item, index) => (
-                <tr key={index} className="border-b border-border/50">
+                <tr key={index} className={`border-b border-border/50 ${item.metric === 'TOTAL' ? 'font-bold bg-muted/20' : ''}`}>
                   <td className="py-3 px-4 font-medium">{item.metric}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.critical}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.high}</td>
