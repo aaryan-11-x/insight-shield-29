@@ -12,6 +12,8 @@ import SelectInstance from "./pages/SelectInstance";
 import Dashboard from "./pages/Dashboard";
 import Prioritization from "./pages/Prioritization";
 import Exploitability from "./pages/Exploitability";
+import VulnerabilityAging from "./pages/VulnerabilityAging";
+import MostExploitable from "./pages/MostExploitable";
 import Remediation from "./pages/Remediation";
 import Clustering from "./pages/Clustering";
 import CVESummary from "./pages/CVESummary";
@@ -44,6 +46,8 @@ const App = () => (
                       <Route path="/" element={<Dashboard />} />
                       <Route path="/prioritization" element={<Prioritization />} />
                       <Route path="/exploitability" element={<Exploitability />} />
+                      <Route path="/vulnerability-aging" element={<VulnerabilityAging />} />
+                      <Route path="/most-exploitable" element={<MostExploitable />} />
                       <Route path="/remediation" element={<Remediation />} />
                       <Route path="/clustering" element={<Clustering />} />
                       <Route path="/cve-summary" element={<CVESummary />} />
