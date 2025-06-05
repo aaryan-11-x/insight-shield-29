@@ -1,4 +1,3 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -36,6 +35,14 @@ const scoringMetrics = [
   { metric: "EPSS", critical: 363, high: 38, medium: 14, low: 47 },
   { metric: "VPR", critical: 3972, high: 241, medium: 2559, low: 55 },
   { metric: "CISA KEV", critical: 54, high: 0, medium: 0, low: 0 },
+];
+
+// Transform scoring metrics for chart
+const scoringMetricsChartData = [
+  { metric: "CVSS", Critical: 36, High: 2296, Medium: 2087, Low: 35 },
+  { metric: "EPSS", Critical: 363, High: 38, Medium: 14, Low: 47 },
+  { metric: "VPR", Critical: 3972, High: 241, Medium: 2559, Low: 55 },
+  { metric: "CISA KEV", Critical: 54, High: 0, Medium: 0, Low: 0 },
 ];
 
 const legendData = [
@@ -106,23 +113,33 @@ export default function Prioritization() {
                   <td className="py-3 px-4 text-center font-bold">{item.low}</td>
                 </tr>
               ))}
-              <tr className="border-b border-border font-bold bg-muted/20">
-                <td className="py-3 px-4">TOTAL</td>
-                <td className="py-3 px-4 text-center">
-                  {scoringMetrics.reduce((sum, item) => sum + item.critical, 0)}
-                </td>
-                <td className="py-3 px-4 text-center">
-                  {scoringMetrics.reduce((sum, item) => sum + item.high, 0)}
-                </td>
-                <td className="py-3 px-4 text-center">
-                  {scoringMetrics.reduce((sum, item) => sum + item.medium, 0)}
-                </td>
-                <td className="py-3 px-4 text-center">
-                  {scoringMetrics.reduce((sum, item) => sum + item.low, 0)}
-                </td>
-              </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Scoring Metrics Chart */}
+      <div className="chart-container">
+        <h3 className="text-lg font-semibold mb-4">Scoring Metrics Overview</h3>
+        <div className="h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={scoringMetricsChartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="metric" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: "#1f2937", 
+                  border: "1px solid #374151",
+                  borderRadius: "8px"
+                }} 
+              />
+              <Bar dataKey="Critical" fill="#dc2626" name="Critical" />
+              <Bar dataKey="High" fill="#ea580c" name="High" />
+              <Bar dataKey="Medium" fill="#ca8a04" name="Medium" />
+              <Bar dataKey="Low" fill="#16a34a" name="Low" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
