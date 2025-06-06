@@ -21,7 +21,10 @@ import MTTMSeverity from "./pages/MTTMSeverity";
 import IPInsights from "./pages/IPInsights";
 import Clustering from "./pages/Clustering";
 import UniqueVulnerabilities from "./pages/UniqueVulnerabilities";
+import RiskSummary from "./pages/RiskSummary";
 import CVESummary from "./pages/CVESummary";
+import HostsSummary from "./pages/HostsSummary";
+import RiskTrajectory from "./pages/RiskTrajectory";
 import EOLComponents from "./pages/EOLComponents";
 import Assets from "./pages/Assets";
 import NotFound from "./pages/NotFound";
@@ -60,7 +63,10 @@ const App = () => (
                       <Route path="/ip-insights" element={<IPInsights />} />
                       <Route path="/clustering" element={<Clustering />} />
                       <Route path="/unique-vulnerabilities" element={<UniqueVulnerabilities />} />
+                      <Route path="/risk-summary" element={<RiskSummary />} />
                       <Route path="/cve-summary" element={<CVESummary />} />
+                      <Route path="/hosts-summary" element={<HostsSummary />} />
+                      <Route path="/risk-trajectory" element={<RiskTrajectory />} />
                       <Route path="/eol-components" element={<EOLComponents />} />
                       <Route path="/assets" element={<Assets />} />
                       <Route path="*" element={<NotFound />} />
