@@ -18,7 +18,9 @@ import Remediation from "./pages/Remediation";
 import RemediationUnique from "./pages/RemediationUnique";
 import PatchDetails from "./pages/PatchDetails";
 import MTTMSeverity from "./pages/MTTMSeverity";
+import IPInsights from "./pages/IPInsights";
 import Clustering from "./pages/Clustering";
+import UniqueVulnerabilities from "./pages/UniqueVulnerabilities";
 import CVESummary from "./pages/CVESummary";
 import EOLComponents from "./pages/EOLComponents";
 import Assets from "./pages/Assets";
@@ -55,7 +57,9 @@ const App = () => (
                       <Route path="/remediation-unique" element={<RemediationUnique />} />
                       <Route path="/patch-details" element={<PatchDetails />} />
                       <Route path="/mttm-severity" element={<MTTMSeverity />} />
+                      <Route path="/ip-insights" element={<IPInsights />} />
                       <Route path="/clustering" element={<Clustering />} />
+                      <Route path="/unique-vulnerabilities" element={<UniqueVulnerabilities />} />
                       <Route path="/cve-summary" element={<CVESummary />} />
                       <Route path="/eol-components" element={<EOLComponents />} />
                       <Route path="/assets" element={<Assets />} />
