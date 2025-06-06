@@ -67,7 +67,10 @@ const App = () => (
                       <Route path="/cve-summary" element={<CVESummary />} />
                       <Route path="/hosts-summary" element={<HostsSummary />} />
                       <Route path="/risk-trajectory" element={<RiskTrajectory />} />
+                      <Route path="/eol-summary" element={<EOLSummary />} />
                       <Route path="/eol-components" element={<EOLComponents />} />
+                      <Route path="/eol-ips" element={<EOLIPs />} />
+                      <Route path="/eol-versions" element={<EOLVersions />} />
                       <Route path="/assets" element={<Assets />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
