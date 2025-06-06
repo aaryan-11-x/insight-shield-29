@@ -68,7 +68,7 @@ export default function MTTMSeverity() {
                 />
                 <Bar 
                   dataKey="vulnerabilityCount" 
-                  fill={(entry) => entry.color}
+                  fill="#16a34a"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>

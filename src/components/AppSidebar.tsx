@@ -76,8 +76,8 @@ const menuItems = [
     icon: Grid2x2,
     subItems: [
       {
-        title: "IP Summary",
-        url: "/ip-summary",
+        title: "IP Insights",
+        url: "/ip-insights",
       },
       {
         title: "Vulnerability Clustering",
