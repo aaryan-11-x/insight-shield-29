@@ -44,7 +44,7 @@ export default function EOLSummary() {
       {/* End of Life Components Summary */}
       <div className="chart-container">
         <h2 className="text-xl font-semibold mb-6">End of Life Components Summary</h2>
-        
+
         {/* EOL Summary Statistics */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">EOL Summary Statistics</h3>
@@ -121,16 +121,27 @@ export default function EOLSummary() {
           <h3 className="text-lg font-semibold mb-4">Top EOL Software Types</h3>
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topEOLSoftwareTypes} layout="horizontal">
+              <BarChart data={topEOLSoftwareTypes} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis type="number" stroke="#9ca3af" />
+                <XAxis
+                  type="number"
+                  stroke="#9ca3af"
+                  domain={[0, 'dataMax + 10']}
+                  label={{
+                    value: "Component Count",
+                    position: "insideBottom",
+                    offset: -5,
+                    fill: "#9ca3af",
+                    fontSize: 12
+                  }}
+                />
                 <YAxis type="category" dataKey="name" stroke="#9ca3af" fontSize={12} width={120} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "#1f2937", 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
                     border: "1px solid #374151",
                     borderRadius: "8px"
-                  }} 
+                  }}
                 />
                 <Bar dataKey="count" fill="#3b82f6" />
               </BarChart>
@@ -158,12 +169,12 @@ export default function EOLSummary() {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "#1f2937", 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
                     border: "1px solid #374151",
                     borderRadius: "8px"
-                  }} 
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>

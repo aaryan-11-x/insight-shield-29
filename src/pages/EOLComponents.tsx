@@ -1,5 +1,4 @@
-
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -10,14 +9,23 @@ const uniqueSEoLComponents = [
   { pluginId: "172179", name: "Microsoft .NET Core SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
   { pluginId: "182252", name: "Apache Log4j SEoL (<= 1.x)", risk: "Critical", eolDuration: "nan", cve: "nan" },
   { pluginId: "192813", name: "Microsoft Windows Server 2012 SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "58134", name: "Microsoft Silverlight SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "192782", name: "Microsoft Windows Server 2008 SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "172177", name: ".NET Core SDK SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" }
+  { pluginId: "58134", name: "Microsoft Silverlight SEoL", risk: "High", eolDuration: "nan", cve: "nan" },
+  { pluginId: "192782", name: "Microsoft Windows Server 2008 SEoL", risk: "High", eolDuration: "nan", cve: "nan" },
+  { pluginId: "172177", name: ".NET Core SDK SEoL", risk: "Medium", eolDuration: "nan", cve: "nan" }
 ];
 
-const chartData = uniqueSEoLComponents.map(component => ({
-  name: component.name.replace(" SEoL", ""),
-  risk: component.risk
+// Map risk → numeric value
+const riskValueMap: Record<string, number> = {
+  "Critical": 3,
+  "High": 2,
+  "Medium": 1
+};
+
+// Prepare chart data
+const chartData = uniqueSEoLComponents.map(item => ({
+  name: item.name.replace(" SEoL", ""),
+  risk: item.risk,
+  riskValue: riskValueMap[item.risk] ?? 0
 }));
 
 const eolDurationStats = {
@@ -63,7 +71,12 @@ export default function EOLComponents() {
                     <td className="py-3 px-4 font-mono text-sm">{item.pluginId}</td>
                     <td className="py-3 px-4 text-sm">{item.name}</td>
                     <td className="py-3 px-4 text-center">
-                      <Badge variant="destructive">
+                      <Badge variant={
+                        item.risk === "Critical" ? "destructive" : 
+                        item.risk === "High" ? "default" : 
+                        item.risk === "Medium" ? "secondary" :
+                        "outline"
+                      }>
                         {item.risk}
                       </Badge>
                     </td>
@@ -78,22 +91,38 @@ export default function EOLComponents() {
 
         {/* Chart */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Component Names & Risk</h3>
+          <h3 className="text-lg font-semibold mb-4">Component Severity by Name</h3>
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} layout="horizontal">
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis type="number" stroke="#9ca3af" />
-                <YAxis type="category" dataKey="name" stroke="#9ca3af" fontSize={10} width={120} />
+                <XAxis type="number" domain={[0, 3]} ticks={[1, 2, 3]} stroke="#9ca3af" />
+                <YAxis type="category" dataKey="name" stroke="#9ca3af" fontSize={12} width={200} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "#1f2937", 
                     border: "1px solid #374151",
                     borderRadius: "8px"
                   }}
-                  formatter={() => ["Critical", "Risk Level"]}
+                  formatter={(value, name) => {
+                    const level = Object.entries(riskValueMap).find(([k, v]) => v === value)?.[0] || "Unknown";
+                    return [level, "Risk Level"];
+                  }}
                 />
-                <Bar dataKey={() => 1} fill="#ef4444" />
+                <Bar dataKey="riskValue">
+                  {chartData.map((entry, index) => {
+                    const color = 
+                      entry.risk === "Critical" ? "#ef4444" :
+                      entry.risk === "High" ? "#f59e0b" :
+                      entry.risk === "Medium" ? "#3b82f6" :
+                      "#10b981"; // fallback green
+                    return <Cell key={`cell-${index}`} fill={color} />;
+                  })}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

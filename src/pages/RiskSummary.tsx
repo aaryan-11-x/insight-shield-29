@@ -1,4 +1,3 @@
-
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 
@@ -61,8 +60,8 @@ export default function RiskSummary() {
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <div 
-                          className="w-3 h-3 rounded-full" 
+                        <div
+                          className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: item.color }}
                         />
                         <span className="font-medium">{item.severity}</span>
@@ -139,19 +138,23 @@ export default function RiskSummary() {
           <h3 className="text-lg font-semibold mb-4">Top CVEs Chart</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topCVEsData} layout="horizontal">
+              <BarChart data={topCVEsData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis type="number" stroke="#9ca3af" />
+                <XAxis
+                  type="number"
+                  stroke="#9ca3af"
+                  domain={[0, 'dataMax + 10']}
+                />
                 <YAxis dataKey="cve" type="category" stroke="#9ca3af" width={120} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "#1f2937", 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1f2937",
                     border: "1px solid #374151",
                     borderRadius: "8px"
-                  }} 
+                  }}
                 />
-                <Bar 
-                  dataKey="count" 
+                <Bar
+                  dataKey="count"
                   fill="#3b82f6"
                   radius={[0, 4, 4, 0]}
                 />
@@ -195,16 +198,20 @@ export default function RiskSummary() {
 
         <div className="mt-6 h-96">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topHostsData} layout="horizontal">
+            <BarChart data={topHostsData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis type="number" stroke="#9ca3af" />
+              <XAxis
+                type="number"
+                stroke="#9ca3af"
+                domain={[0, 'dataMax + 10']}
+              />
               <YAxis dataKey="host" type="category" stroke="#9ca3af" width={120} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "#1f2937", 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
                   border: "1px solid #374151",
                   borderRadius: "8px"
-                }} 
+                }}
               />
               <Bar dataKey="critical" stackId="a" fill="#dc2626" />
               <Bar dataKey="high" stackId="a" fill="#ea580c" />

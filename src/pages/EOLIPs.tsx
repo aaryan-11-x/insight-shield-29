@@ -114,7 +114,7 @@ export default function EOLIPs() {
                   <span className="font-bold">{seolIPStats.ipsWithTwoToFiveSEoLComponents}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">IPs with >5 SEoL Components</span>
+                  <span className="text-sm text-muted-foreground">IPs with &gt;recharts5 SEoL Components</span>
                   <span className="font-bold">{seolIPStats.ipsWithMoreThanFiveSEoLComponents}</span>
                 </div>
               </div>
