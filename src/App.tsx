@@ -15,6 +15,9 @@ import Exploitability from "./pages/Exploitability";
 import VulnerabilityAging from "./pages/VulnerabilityAging";
 import MostExploitable from "./pages/MostExploitable";
 import Remediation from "./pages/Remediation";
+import RemediationUnique from "./pages/RemediationUnique";
+import PatchDetails from "./pages/PatchDetails";
+import MTTMSeverity from "./pages/MTTMSeverity";
 import Clustering from "./pages/Clustering";
 import CVESummary from "./pages/CVESummary";
 import EOLComponents from "./pages/EOLComponents";
@@ -49,6 +52,9 @@ const App = () => (
                       <Route path="/vulnerability-aging" element={<VulnerabilityAging />} />
                       <Route path="/most-exploitable" element={<MostExploitable />} />
                       <Route path="/remediation" element={<Remediation />} />
+                      <Route path="/remediation-unique" element={<RemediationUnique />} />
+                      <Route path="/patch-details" element={<PatchDetails />} />
+                      <Route path="/mttm-severity" element={<MTTMSeverity />} />
                       <Route path="/clustering" element={<Clustering />} />
                       <Route path="/cve-summary" element={<CVESummary />} />
                       <Route path="/eol-components" element={<EOLComponents />} />
