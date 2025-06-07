@@ -51,7 +51,7 @@ export default function Questionnaire() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Questionnaire answers:", answers, additionalInfo);
-    navigate("/select-instance");
+    navigate("/instance-choice");
   };
 
   const isComplete = questions.every(q => answers[q.id]);
