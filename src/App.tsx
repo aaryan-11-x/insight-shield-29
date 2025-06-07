@@ -8,6 +8,9 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Login from "./pages/Login";
 import Questionnaire from "./pages/Questionnaire";
+import InstanceChoice from "./pages/InstanceChoice";
+import CreateInstance from "./pages/CreateInstance";
+import UploadVulnerabilities from "./pages/UploadVulnerabilities";
 import SelectInstance from "./pages/SelectInstance";
 import Dashboard from "./pages/Dashboard";
 import Prioritization from "./pages/Prioritization";
@@ -43,6 +46,9 @@ const App = () => (
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/questionnaire" element={<Questionnaire />} />
+          <Route path="/instance-choice" element={<InstanceChoice />} />
+          <Route path="/create-instance" element={<CreateInstance />} />
+          <Route path="/upload-vulnerabilities" element={<UploadVulnerabilities />} />
           <Route path="/select-instance" element={<SelectInstance />} />
           <Route path="/*" element={
             <SidebarProvider>
