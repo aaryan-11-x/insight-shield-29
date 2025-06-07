@@ -114,7 +114,7 @@ export default function EOLIPs() {
                   <span className="font-bold">{seolIPStats.ipsWithTwoToFiveSEoLComponents}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">IPs with &gt;recharts5 SEoL Components</span>
+                  <span className="text-sm text-muted-foreground">IPs with &gt;5 SEoL Components</span>
                   <span className="font-bold">{seolIPStats.ipsWithMoreThanFiveSEoLComponents}</span>
                 </div>
               </div>
@@ -154,40 +154,6 @@ export default function EOLIPs() {
               </table>
             </div>
           </div>
-
-          {/* Complete List of All IPs with SEoL Components */}
-          <div className="chart-container">
-            <h3 className="text-lg font-semibold mb-4">Complete List of All IPs with SEoL Components</h3>
-            <div className="max-h-96 overflow-y-auto">
-              <table className="w-full">
-                <thead className="sticky top-0 bg-background">
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4">IP Address</th>
-                    <th className="text-center py-3 px-4">SEoL Component Count</th>
-                    <th className="text-center py-3 px-4">Risk Level</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {completeIPsList.map((item, index) => (
-                    <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                      <td className="py-3 px-4 font-mono text-sm">{item.ip}</td>
-                      <td className="py-3 px-4 text-center font-bold">{item.count}</td>
-                      <td className="py-3 px-4 text-center">
-                        <Badge variant={
-                          item.riskLevel === "Critical" ? "destructive" : 
-                          item.riskLevel === "High" ? "default" : 
-                          item.riskLevel === "Medium" ? "secondary" :
-                          "outline"
-                        }>
-                          {item.riskLevel}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
 
         {/* Chart Section */}
@@ -196,7 +162,7 @@ export default function EOLIPs() {
             <h3 className="text-lg font-semibold mb-4">Top 10 IPs by SEoL Component Count</h3>
             <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topIPsForChart} layout="horizontal">
+                <BarChart data={topIPsForChart} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis type="number" stroke="#9ca3af" />
                   <YAxis type="category" dataKey="ip" stroke="#9ca3af" fontSize={10} width={100} />
@@ -207,13 +173,47 @@ export default function EOLIPs() {
                       borderRadius: "8px"
                     }}
                     labelFormatter={(value) => `IP: ${value}`}
-                    formatter={(value) => [`${value}`, "SEoL Components"]}
+                    formatter={(value, name) => [`${value}`, "SEoL Components"]}
                   />
                   <Bar dataKey="count" fill="#ef4444" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Complete List - Full Width */}
+      <div className="chart-container">
+        <h3 className="text-lg font-semibold mb-4">Complete List of All IPs with SEoL Components</h3>
+        <div className="max-h-96 overflow-y-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-background">
+              <tr className="border-b border-border">
+                <th className="text-left py-3 px-4">IP Address</th>
+                <th className="text-center py-3 px-4">SEoL Component Count</th>
+                <th className="text-center py-3 px-4">Risk Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              {completeIPsList.map((item, index) => (
+                <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                  <td className="py-3 px-4 font-mono text-sm">{item.ip}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.count}</td>
+                  <td className="py-3 px-4 text-center">
+                    <Badge variant={
+                      item.riskLevel === "Critical" ? "destructive" : 
+                      item.riskLevel === "High" ? "default" : 
+                      item.riskLevel === "Medium" ? "secondary" :
+                      "outline"
+                    }>
+                      {item.riskLevel}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
