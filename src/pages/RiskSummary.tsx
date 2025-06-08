@@ -1,12 +1,16 @@
+
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const severityData = [
-  { severity: "Critical", count: 2678, vulnerabilitiesWithCVE: 2409, color: "#dc2626" },
-  { severity: "High", count: 2336, vulnerabilitiesWithCVE: 2256, color: "#ea580c" },
-  { severity: "Medium", count: 2104, vulnerabilitiesWithCVE: 125, color: "#ca8a04" },
-  { severity: "Low", count: 14096, vulnerabilitiesWithCVE: 37, color: "#16a34a" },
-];
+interface RiskData {
+  severity: string;
+  count: number;
+  vulnerabilities_with_cve: number;
+}
 
 const topCVEsData = [
   { cve: "CVE-2016-2183", count: 285, severity: "High" },
@@ -34,12 +38,89 @@ const topHostsData = [
   { host: "10.168.1.130", vulnerabilityCount: 134, vulnerabilitiesWithCVE: 90, critical: 56, high: 34, medium: 8, low: 36 },
 ];
 
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case "Critical": return "#dc2626";
+    case "High": return "#ea580c";
+    case "Medium": return "#ca8a04";
+    case "Low": 
+    case "Low/None": return "#16a34a";
+    default: return "#6b7280";
+  }
+};
+
 export default function RiskSummary() {
+  const { data: severityData, isLoading, error } = useQuery({
+    queryKey: ['risk-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('risk_summary')
+        .select('*')
+        .order('count', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching risk data:', error);
+        throw error;
+      }
+      
+      return data?.map(item => ({
+        ...item,
+        color: getSeverityColor(item.severity)
+      })) as (RiskData & { color: string })[];
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Risk Summary</h1>
+            <p className="text-muted-foreground">Comprehensive risk assessment and vulnerability overview</p>
+          </div>
+          <Button className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading risk data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Risk Summary</h1>
+            <p className="text-muted-foreground">Comprehensive risk assessment and vulnerability overview</p>
+          </div>
+          <Button className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-red-400">Error loading risk data: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Risk Summary</h1>
-        <p className="text-muted-foreground">Comprehensive risk assessment and vulnerability overview</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Risk Summary</h1>
+          <p className="text-muted-foreground">Comprehensive risk assessment and vulnerability overview</p>
+        </div>
+        <Button className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
       </div>
 
       {/* Severity Distribution */}
@@ -56,7 +137,7 @@ export default function RiskSummary() {
                 </tr>
               </thead>
               <tbody>
-                {severityData.map((item, index) => (
+                {severityData?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
@@ -68,7 +149,7 @@ export default function RiskSummary() {
                       </div>
                     </td>
                     <td className="py-3 px-4 text-center font-bold">{item.count.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-center font-mono">{item.vulnerabilitiesWithCVE.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-center font-mono">{item.vulnerabilities_with_cve.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -91,7 +172,7 @@ export default function RiskSummary() {
                   fill="#8884d8"
                   dataKey="count"
                 >
-                  {severityData.map((entry, index) => (
+                  {severityData?.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>

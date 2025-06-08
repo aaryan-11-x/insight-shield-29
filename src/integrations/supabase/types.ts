@@ -39,6 +39,36 @@ export type Database = {
         }
         Relationships: []
       }
+      host_summary: {
+        Row: {
+          critical: number
+          high: number
+          host: string
+          low: number
+          medium: number
+          vulnerabilities_with_cve: number
+          vulnerability_count: number
+        }
+        Insert: {
+          critical: number
+          high: number
+          host: string
+          low: number
+          medium: number
+          vulnerabilities_with_cve: number
+          vulnerability_count: number
+        }
+        Update: {
+          critical?: number
+          high?: number
+          host?: string
+          low?: number
+          medium?: number
+          vulnerabilities_with_cve?: number
+          vulnerability_count?: number
+        }
+        Relationships: []
+      }
       instances: {
         Row: {
           created_at: string
@@ -66,6 +96,27 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      risk_summary: {
+        Row: {
+          count: number
+          created_at: string
+          severity: string
+          vulnerabilities_with_cve: number
+        }
+        Insert: {
+          count: number
+          created_at?: string
+          severity: string
+          vulnerabilities_with_cve: number
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          severity?: string
+          vulnerabilities_with_cve?: number
         }
         Relationships: []
       }

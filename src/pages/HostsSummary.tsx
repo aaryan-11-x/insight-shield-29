@@ -1,34 +1,95 @@
 
-const hostsData = [
-  { host: "10.168.50.77", vulnerabilityCount: 256, vulnerabilitiesWithCVE: 193, critical: 161, high: 46, medium: 10, low: 39 },
-  { host: "10.168.50.140", vulnerabilityCount: 231, vulnerabilitiesWithCVE: 152, critical: 83, high: 65, medium: 31, low: 52 },
-  { host: "10.168.9.33", vulnerabilityCount: 210, vulnerabilitiesWithCVE: 16, critical: 5, high: 16, medium: 31, low: 158 },
-  { host: "10.168.51.82", vulnerabilityCount: 189, vulnerabilitiesWithCVE: 98, critical: 97, high: 10, medium: 24, low: 58 },
-  { host: "10.168.1.235", vulnerabilityCount: 162, vulnerabilitiesWithCVE: 117, critical: 67, high: 46, medium: 15, low: 34 },
-  { host: "10.168.9.6", vulnerabilityCount: 145, vulnerabilitiesWithCVE: 67, critical: 0, high: 67, medium: 17, low: 61 },
-  { host: "10.168.1.184", vulnerabilityCount: 142, vulnerabilitiesWithCVE: 89, critical: 56, high: 33, medium: 9, low: 44 },
-  { host: "10.168.2.131", vulnerabilityCount: 134, vulnerabilitiesWithCVE: 89, critical: 56, high: 33, medium: 8, low: 37 },
-  { host: "10.168.1.130", vulnerabilityCount: 134, vulnerabilitiesWithCVE: 90, critical: 56, high: 34, medium: 8, low: 36 },
-  { host: "10.168.1.131", vulnerabilityCount: 134, vulnerabilitiesWithCVE: 90, critical: 56, high: 34, medium: 8, low: 36 },
-  { host: "10.167.38.8", vulnerabilityCount: 129, vulnerabilitiesWithCVE: 73, critical: 72, high: 13, medium: 5, low: 39 },
-  { host: "10.167.36.196", vulnerabilityCount: 127, vulnerabilitiesWithCVE: 73, critical: 72, high: 13, medium: 4, low: 38 },
-  { host: "10.167.36.33", vulnerabilityCount: 127, vulnerabilitiesWithCVE: 73, critical: 72, high: 14, medium: 4, low: 37 },
-  { host: "10.167.36.104", vulnerabilityCount: 126, vulnerabilitiesWithCVE: 73, critical: 72, high: 13, medium: 4, low: 37 },
-  { host: "10.167.37.217", vulnerabilityCount: 126, vulnerabilitiesWithCVE: 73, critical: 72, high: 15, medium: 4, low: 35 }
-];
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const summaryStats = {
-  totalHosts: 359,
-  totalVulnerabilities: hostsData.reduce((sum, host) => sum + host.vulnerabilityCount, 0),
-  totalVulnerabilitiesWithCVE: hostsData.reduce((sum, host) => sum + host.vulnerabilitiesWithCVE, 0)
-};
+interface HostData {
+  host: string;
+  vulnerability_count: number;
+  vulnerabilities_with_cve: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+}
 
 export default function HostsSummary() {
+  const { data: hostsData, isLoading, error } = useQuery({
+    queryKey: ['host-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('host_summary')
+        .select('*')
+        .order('vulnerability_count', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching host data:', error);
+        throw error;
+      }
+      
+      return data as HostData[];
+    }
+  });
+
+  // Calculate summary statistics from the fetched data
+  const summaryStats = {
+    totalHosts: hostsData?.length || 0,
+    totalVulnerabilities: hostsData?.reduce((sum, host) => sum + host.vulnerability_count, 0) || 0,
+    totalVulnerabilitiesWithCVE: hostsData?.reduce((sum, host) => sum + host.vulnerabilities_with_cve, 0) || 0
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Hosts Summary</h1>
+            <p className="text-muted-foreground">Comprehensive overview of host vulnerabilities and risk assessment</p>
+          </div>
+          <Button className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading host data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Hosts Summary</h1>
+            <p className="text-muted-foreground">Comprehensive overview of host vulnerabilities and risk assessment</p>
+          </div>
+          <Button className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-red-400">Error loading host data: {error.message}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Hosts Summary</h1>
-        <p className="text-muted-foreground">Comprehensive overview of host vulnerabilities and risk assessment</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Hosts Summary</h1>
+          <p className="text-muted-foreground">Comprehensive overview of host vulnerabilities and risk assessment</p>
+        </div>
+        <Button className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
       </div>
 
       {/* Summary Statistics */}
@@ -70,11 +131,11 @@ export default function HostsSummary() {
               </tr>
             </thead>
             <tbody>
-              {hostsData.map((item, index) => (
+              {hostsData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono text-sm">{item.host}</td>
-                  <td className="py-3 px-4 text-center font-bold">{item.vulnerabilityCount}</td>
-                  <td className="py-3 px-4 text-center font-mono">{item.vulnerabilitiesWithCVE}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.vulnerability_count}</td>
+                  <td className="py-3 px-4 text-center font-mono">{item.vulnerabilities_with_cve}</td>
                   <td className="py-3 px-4 text-center text-red-400 font-bold">{item.critical}</td>
                   <td className="py-3 px-4 text-center text-orange-400 font-bold">{item.high}</td>
                   <td className="py-3 px-4 text-center text-yellow-400 font-bold">{item.medium}</td>
@@ -85,6 +146,12 @@ export default function HostsSummary() {
           </table>
         </div>
       </div>
+
+      {hostsData?.length === 0 && (
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">No host data found.</p>
+        </div>
+      )}
     </div>
   );
 }

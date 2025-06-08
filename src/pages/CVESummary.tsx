@@ -38,7 +38,7 @@ export default function CVESummary() {
     critical: cveData?.filter(item => item.severity === "Critical").length || 0,
     high: cveData?.filter(item => item.severity === "High").length || 0,
     medium: cveData?.filter(item => item.severity === "Medium").length || 0,
-    low: cveData?.filter(item => item.severity === "Low").length || 0,
+    low: cveData?.filter(item => item.severity === "Low" || item.severity === "Low/None").length || 0,
   };
 
   if (isLoading) {
@@ -46,7 +46,7 @@ export default function CVESummary() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Higher Management Insights</h1>
+            <h1 className="text-3xl font-bold">CVE Summary</h1>
             <p className="text-muted-foreground">CVE summary and executive overview</p>
           </div>
         </div>
@@ -62,7 +62,7 @@ export default function CVESummary() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Higher Management Insights</h1>
+            <h1 className="text-3xl font-bold">CVE Summary</h1>
             <p className="text-muted-foreground">CVE summary and executive overview</p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function CVESummary() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Higher Management Insights</h1>
+          <h1 className="text-3xl font-bold">CVE Summary</h1>
           <p className="text-muted-foreground">CVE summary and executive overview</p>
         </div>
         <Button className="flex items-center gap-2">
