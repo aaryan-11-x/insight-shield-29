@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { Server, Shield, AlertTriangle } from "lucide-react";
+import { Server, Shield, AlertTriangle, ArrowLeft } from "lucide-react";
 
 const instances = [
   {
@@ -48,6 +47,10 @@ export default function SelectInstance() {
     }
   };
 
+  const handleBack = () => {
+    navigate("/instance-choice");
+  };
+
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case "high": return "text-red-400";
@@ -69,6 +72,15 @@ export default function SelectInstance() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
+        <Button 
+          variant="ghost" 
+          className="mb-6" 
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Instance Choice
+        </Button>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl font-bold">Select Instance</CardTitle>

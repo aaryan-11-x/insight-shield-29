@@ -1,6 +1,7 @@
-
 import { MetricCard } from "@/components/MetricCard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 
 const assetData = [
   { name: "Vulnerable Assets", value: 359, color: "#dc2626" },
@@ -60,11 +61,22 @@ const topVulnerableHostsData = [
 ];
 
 export default function Dashboard() {
+  const handleDownloadReport = () => {
+    // In a real application, this would generate and download a report
+    console.log("Downloading dashboard report...");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Vulnerability Visualization</h1>
-        <p className="text-muted-foreground">Comprehensive security overview and threat assessment</p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">Vulnerability Visualization</h1>
+          <p className="text-muted-foreground">Comprehensive security overview and threat assessment</p>
+        </div>
+        <Button onClick={handleDownloadReport} className="flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
       </div>
 
       {/* Metrics Grid */}
