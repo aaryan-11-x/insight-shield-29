@@ -11,53 +11,33 @@ export type Database = {
     Tables: {
       cve_summary: {
         Row: {
-          count: number
-          created_at: string
-          cve_id: string
+          count: number | null
+          cve: string
           description: string | null
           hosts: string | null
-          id: number
-          instance_id: number
           name: string | null
-          severity: string
+          severity: string | null
           solutions: string | null
-          updated_at: string
         }
         Insert: {
-          count: number
-          created_at?: string
-          cve_id: string
+          count?: number | null
+          cve: string
           description?: string | null
           hosts?: string | null
-          id?: number
-          instance_id: number
           name?: string | null
-          severity: string
+          severity?: string | null
           solutions?: string | null
-          updated_at?: string
         }
         Update: {
-          count?: number
-          created_at?: string
-          cve_id?: string
+          count?: number | null
+          cve?: string
           description?: string | null
           hosts?: string | null
-          id?: number
-          instance_id?: number
           name?: string | null
-          severity?: string
+          severity?: string | null
           solutions?: string | null
-          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "cve_summary_instance_id_fkey"
-            columns: ["instance_id"]
-            isOneToOne: false
-            referencedRelation: "instances"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       instances: {
         Row: {
@@ -88,6 +68,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      runs: {
+        Row: {
+          created_at: string
+          id: number
+          instance_id: number
+          run_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          instance_id: number
+          run_number: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          instance_id?: number
+          run_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runs_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
