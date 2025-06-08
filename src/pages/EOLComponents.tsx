@@ -1,41 +1,100 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { SimpleMetricCard } from "@/components/SimpleMetricCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const uniqueSEoLComponents = [
-  { pluginId: "172178", name: "ASP.NET Core SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "172179", name: "Microsoft .NET Core SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "182252", name: "Apache Log4j SEoL (<= 1.x)", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "192813", name: "Microsoft Windows Server 2012 SEoL", risk: "Critical", eolDuration: "nan", cve: "nan" },
-  { pluginId: "58134", name: "Microsoft Silverlight SEoL", risk: "High", eolDuration: "nan", cve: "nan" },
-  { pluginId: "192782", name: "Microsoft Windows Server 2008 SEoL", risk: "High", eolDuration: "nan", cve: "nan" },
-  { pluginId: "172177", name: ".NET Core SDK SEoL", risk: "Medium", eolDuration: "nan", cve: "nan" }
-];
+interface EOLComponent {
+  plugin_id: number;
+  name: string;
+  risk: string;
+  eol_duration_days: number | null;
+  cve: string | null;
+}
 
-// Map risk → numeric value
-const riskValueMap: Record<string, number> = {
-  "Critical": 3,
-  "High": 2,
-  "Medium": 1
-};
-
-// Prepare chart data
-const chartData = uniqueSEoLComponents.map(item => ({
-  name: item.name.replace(" SEoL", ""),
-  risk: item.risk,
-  riskValue: riskValueMap[item.risk] ?? 0
-}));
-
-const eolDurationStats = {
-  totalUniqueSEoLComponents: 7,
-  totalSEoLInstances: 215,
-  unknownDurationCount: 7,
-  totalCount: 7
-};
+interface EOLSummary {
+  total_unique_components: number;
+  total_count: number;
+  hosts_with_eol_components: number;
+  software_types_affected: number;
+}
 
 export default function EOLComponents() {
+  const { data: eolComponents, isLoading: componentsLoading } = useQuery({
+    queryKey: ['eol-components'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eol_components')
+        .select('*');
+      
+      if (error) {
+        console.error('Error fetching EOL components:', error);
+        throw error;
+      }
+      
+      return data as EOLComponent[];
+    }
+  });
+
+  const { data: eolSummary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['eol-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eol_summary')
+        .select('*')
+        .single();
+      
+      if (error) {
+        console.error('Error fetching EOL summary:', error);
+        throw error;
+      }
+      
+      return data as EOLSummary;
+    }
+  });
+
+  // Map risk → numeric value
+  const riskValueMap: Record<string, number> = {
+    "Critical": 3,
+    "High": 2,
+    "Medium": 1
+  };
+
+  // Prepare chart data
+  const chartData = eolComponents?.map(item => ({
+    name: item.name.replace(" SEoL", ""),
+    risk: item.risk,
+    riskValue: riskValueMap[item.risk] ?? 0
+  })) || [];
+
+  // Count components with unknown duration
+  const unknownDurationCount = eolComponents?.filter(item => 
+    item.eol_duration_days === null || item.eol_duration_days === undefined
+  ).length || 0;
+
+  if (componentsLoading || summaryLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">EOL Components</h1>
+            <p className="text-muted-foreground">End-of-life component tracking and risk assessment</p>
+          </div>
+          <Button className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download Report
+          </Button>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading EOL data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -66,9 +125,9 @@ export default function EOLComponents() {
                 </tr>
               </thead>
               <tbody>
-                {uniqueSEoLComponents.map((item, index) => (
+                {eolComponents?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-4 font-mono text-sm">{item.pluginId}</td>
+                    <td className="py-3 px-4 font-mono text-sm">{item.plugin_id}</td>
                     <td className="py-3 px-4 text-sm">{item.name}</td>
                     <td className="py-3 px-4 text-center">
                       <Badge variant={
@@ -80,8 +139,12 @@ export default function EOLComponents() {
                         {item.risk}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-center">{item.eolDuration}</td>
-                    <td className="py-3 px-4 text-center">{item.cve}</td>
+                    <td className="py-3 px-4 text-center">
+                      {item.eol_duration_days !== null ? item.eol_duration_days : "nan"}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {item.cve || "nan"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -133,22 +196,22 @@ export default function EOLComponents() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <SimpleMetricCard
           title="Total Unique SEoL Components"
-          value={eolDurationStats.totalUniqueSEoLComponents}
+          value={eolSummary?.total_unique_components || 0}
           color="red"
         />
         <SimpleMetricCard
           title="Total SEoL Instances (across all hosts)"
-          value={eolDurationStats.totalSEoLInstances}
+          value={eolSummary?.total_count || 0}
           color="blue"
         />
         <SimpleMetricCard
           title="Unknown EOL Duration"
-          value={`${eolDurationStats.unknownDurationCount} Components`}
+          value={`${unknownDurationCount} Components`}
           color="yellow"
         />
         <SimpleMetricCard
           title="Total"
-          value={`${eolDurationStats.totalCount} Components`}
+          value={`${eolComponents?.length || 0} Components`}
           color="green"
         />
       </div>

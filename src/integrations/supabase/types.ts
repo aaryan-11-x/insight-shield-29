@@ -39,6 +39,102 @@ export type Database = {
         }
         Relationships: []
       }
+      eol_components: {
+        Row: {
+          created_at: string
+          cve: string | null
+          eol_duration_days: number | null
+          name: string
+          plugin_id: number
+          risk: string
+        }
+        Insert: {
+          created_at?: string
+          cve?: string | null
+          eol_duration_days?: number | null
+          name: string
+          plugin_id: number
+          risk: string
+        }
+        Update: {
+          created_at?: string
+          cve?: string | null
+          eol_duration_days?: number | null
+          name?: string
+          plugin_id?: number
+          risk?: string
+        }
+        Relationships: []
+      }
+      eol_summary: {
+        Row: {
+          apache_log4j_count: number
+          asp_net_core_count: number
+          created_at: string
+          critical_count: number
+          critical_pct: number
+          dotnet_core_sdk_count: number
+          high_count: number
+          high_pct: number
+          hosts_with_eol_components: number
+          id: number
+          low_count: number
+          low_pct: number
+          medium_count: number
+          medium_pct: number
+          microsoft_dotnet_core_count: number
+          microsoft_silverlight_count: number
+          software_types_affected: number
+          total_count: number
+          total_unique_components: number
+          unique_eol_versions: number
+        }
+        Insert: {
+          apache_log4j_count?: number
+          asp_net_core_count?: number
+          created_at?: string
+          critical_count: number
+          critical_pct: number
+          dotnet_core_sdk_count?: number
+          high_count: number
+          high_pct: number
+          hosts_with_eol_components: number
+          id?: never
+          low_count: number
+          low_pct: number
+          medium_count: number
+          medium_pct: number
+          microsoft_dotnet_core_count?: number
+          microsoft_silverlight_count?: number
+          software_types_affected: number
+          total_count: number
+          total_unique_components: number
+          unique_eol_versions: number
+        }
+        Update: {
+          apache_log4j_count?: number
+          asp_net_core_count?: number
+          created_at?: string
+          critical_count?: number
+          critical_pct?: number
+          dotnet_core_sdk_count?: number
+          high_count?: number
+          high_pct?: number
+          hosts_with_eol_components?: number
+          id?: never
+          low_count?: number
+          low_pct?: number
+          medium_count?: number
+          medium_pct?: number
+          microsoft_dotnet_core_count?: number
+          microsoft_silverlight_count?: number
+          software_types_affected?: number
+          total_count?: number
+          total_unique_components?: number
+          unique_eol_versions?: number
+        }
+        Relationships: []
+      }
       host_summary: {
         Row: {
           critical: number
