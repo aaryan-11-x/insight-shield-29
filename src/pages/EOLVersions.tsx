@@ -1,34 +1,69 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { SimpleMetricCard } from "@/components/SimpleMetricCard";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const eolVersionsStats = {
-  totalSEoLComponents: 215,
-  totalDifferentSoftwareTypes: 7,
-  totalDifferentVersions: 7
-};
-
-const seolSoftwareDistribution = [
-  { softwareType: "ASP.NET Core", totalInstances: 99, uniqueVersions: 1 },
-  { softwareType: "Microsoft .NET Core", totalInstances: 58, uniqueVersions: 1 },
-  { softwareType: "Apache Log4j", totalInstances: 47, uniqueVersions: 1 },
-  { softwareType: ".NET Core SDK", totalInstances: 6, uniqueVersions: 1 },
-  { softwareType: "Microsoft Silverlight", totalInstances: 2, uniqueVersions: 1 },
-  { softwareType: "Microsoft Windows Server 2008", totalInstances: 2, uniqueVersions: 1 },
-  { softwareType: "Microsoft Windows Server 2012", totalInstances: 1, uniqueVersions: 1 }
-];
-
-const seolVersionDetails = [
-  { softwareType: ".NET Core SDK", version: "Unknown", instanceCount: 6 },
-  { softwareType: "ASP.NET Core", version: "Unknown", instanceCount: 99 },
-  { softwareType: "Apache Log4j", version: "Unknown", instanceCount: 47 },
-  { softwareType: "Microsoft .NET Core", version: "Unknown", instanceCount: 58 },
-  { softwareType: "Microsoft Silverlight", version: "Unknown", instanceCount: 2 },
-  { softwareType: "Microsoft Windows Server 2008", version: "2008", instanceCount: 2 },
-  { softwareType: "Microsoft Windows Server 2012", version: "2012", instanceCount: 1 }
-];
+interface EOLVersionData {
+  software_type: string;
+  version: string;
+  instance_count: number;
+}
 
 export default function EOLVersions() {
+  const { data: eolVersions, isLoading } = useQuery({
+    queryKey: ['eol-versions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eol_versions')
+        .select('*')
+        .order('instance_count', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching EOL versions:', error);
+        throw error;
+      }
+      
+      return data as EOLVersionData[];
+    }
+  });
+
+  // Calculate statistics
+  const stats = eolVersions ? {
+    totalSEoLComponents: eolVersions.reduce((sum, version) => sum + version.instance_count, 0),
+    totalDifferentSoftwareTypes: new Set(eolVersions.map(v => v.software_type)).size,
+    totalDifferentVersions: eolVersions.length
+  } : {
+    totalSEoLComponents: 0,
+    totalDifferentSoftwareTypes: 0,
+    totalDifferentVersions: 0
+  };
+
+  // Create software distribution data
+  const softwareDistribution = eolVersions ? 
+    Array.from(new Set(eolVersions.map(v => v.software_type))).map(softwareType => {
+      const versions = eolVersions.filter(v => v.software_type === softwareType);
+      return {
+        softwareType,
+        totalInstances: versions.reduce((sum, v) => sum + v.instance_count, 0),
+        uniqueVersions: versions.length
+      };
+    }).sort((a, b) => b.totalInstances - a.totalInstances) : [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">EOL Versions</h1>
+          <p className="text-muted-foreground">Detailed analysis of end-of-life software versions and distribution</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading EOL versions data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -40,17 +75,17 @@ export default function EOLVersions() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <SimpleMetricCard
           title="Total SEoL Components"
-          value={eolVersionsStats.totalSEoLComponents}
+          value={stats.totalSEoLComponents}
           color="red"
         />
         <SimpleMetricCard
           title="Total Different Software Types"
-          value={eolVersionsStats.totalDifferentSoftwareTypes}
+          value={stats.totalDifferentSoftwareTypes}
           color="blue"
         />
         <SimpleMetricCard
           title="Total Different Versions"
-          value={eolVersionsStats.totalDifferentVersions}
+          value={stats.totalDifferentVersions}
           color="green"
         />
       </div>
@@ -69,7 +104,7 @@ export default function EOLVersions() {
                 </tr>
               </thead>
               <tbody>
-                {seolSoftwareDistribution.map((item, index) => (
+                {softwareDistribution.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-4 text-sm">{item.softwareType}</td>
                     <td className="py-3 px-4 text-center font-bold">{item.totalInstances}</td>
@@ -80,8 +115,8 @@ export default function EOLVersions() {
               <tfoot>
                 <tr className="border-t border-border bg-muted/20">
                   <td className="py-3 px-4 font-semibold">Total</td>
-                  <td className="py-3 px-4 text-center font-bold">215</td>
-                  <td className="py-3 px-4 text-center font-bold">7</td>
+                  <td className="py-3 px-4 text-center font-bold">{stats.totalSEoLComponents}</td>
+                  <td className="py-3 px-4 text-center font-bold">{stats.totalDifferentSoftwareTypes}</td>
                 </tr>
               </tfoot>
             </table>
@@ -93,7 +128,7 @@ export default function EOLVersions() {
           <h3 className="text-lg font-semibold mb-4">Software Distribution Chart</h3>
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={seolSoftwareDistribution}>
+              <BarChart data={softwareDistribution}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis 
                   dataKey="softwareType" 
@@ -131,11 +166,11 @@ export default function EOLVersions() {
               </tr>
             </thead>
             <tbody>
-              {seolVersionDetails.map((item, index) => (
+              {eolVersions?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="py-3 px-4 text-sm">{item.softwareType}</td>
+                  <td className="py-3 px-4 text-sm">{item.software_type}</td>
                   <td className="py-3 px-4 text-center font-mono text-sm">{item.version}</td>
-                  <td className="py-3 px-4 text-center font-bold">{item.instanceCount}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.instance_count}</td>
                 </tr>
               ))}
             </tbody>

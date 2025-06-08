@@ -1,80 +1,69 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const seolIPStats = {
-  totalIPsWithSEoLComponents: 48,
-  averageSEoLComponentsPerIP: 4.48,
-  maximumSEoLComponentsOnSingleIP: 15,
-  ipsWithOneSEoLComponent: 5,
-  ipsWithTwoToFiveSEoLComponents: 30,
-  ipsWithMoreThanFiveSEoLComponents: 13
-};
-
-const topIPsForChart = [
-  { ip: "10.168.50.77", count: 15, riskLevel: "Critical" },
-  { ip: "10.167.36.196", count: 10, riskLevel: "High" },
-  { ip: "10.167.38.8", count: 10, riskLevel: "High" },
-  { ip: "10.167.37.217", count: 10, riskLevel: "High" },
-  { ip: "10.167.37.206", count: 10, riskLevel: "High" },
-  { ip: "10.167.36.104", count: 10, riskLevel: "High" },
-  { ip: "10.167.36.33", count: 10, riskLevel: "High" },
-  { ip: "10.167.36.52", count: 10, riskLevel: "High" },
-  { ip: "10.168.51.82", count: 8, riskLevel: "High" },
-  { ip: "10.167.37.229", count: 8, riskLevel: "High" }
-];
-
-const completeIPsList = [
-  { ip: "10.168.50.77", count: 15, riskLevel: "Critical" },
-  { ip: "10.167.36.196", count: 10, riskLevel: "High" },
-  { ip: "10.167.38.8", count: 10, riskLevel: "High" },
-  { ip: "10.167.37.217", count: 10, riskLevel: "High" },
-  { ip: "10.167.37.206", count: 10, riskLevel: "High" },
-  { ip: "10.167.36.104", count: 10, riskLevel: "High" },
-  { ip: "10.167.36.33", count: 10, riskLevel: "High" },
-  { ip: "10.167.36.52", count: 10, riskLevel: "High" },
-  { ip: "10.168.51.82", count: 8, riskLevel: "High" },
-  { ip: "10.167.37.229", count: 8, riskLevel: "High" },
-  { ip: "10.168.52.75", count: 6, riskLevel: "High" },
-  { ip: "10.168.2.48", count: 6, riskLevel: "High" },
-  { ip: "10.168.53.157", count: 6, riskLevel: "High" },
-  { ip: "10.168.59.55", count: 5, riskLevel: "Medium" },
-  { ip: "10.168.9.33", count: 5, riskLevel: "Medium" },
-  { ip: "10.168.50.100", count: 4, riskLevel: "Medium" },
-  { ip: "10.168.50.183", count: 4, riskLevel: "Medium" },
-  { ip: "10.168.52.59", count: 4, riskLevel: "Medium" },
-  { ip: "10.168.50.19", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.50.76", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.64.208", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.138.20", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.138.15", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.98.10", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.102", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.155", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.1.209", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.103", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.36.50", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.104", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.1.180", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.100", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.1.112", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.101", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.133", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.156", count: 3, riskLevel: "Medium" },
-  { ip: "10.167.37.150", count: 3, riskLevel: "Medium" },
-  { ip: "10.168.1.235", count: 2, riskLevel: "Low" },
-  { ip: "10.168.1.219", count: 2, riskLevel: "Low" },
-  { ip: "10.167.37.171", count: 2, riskLevel: "Low" },
-  { ip: "10.168.2.43", count: 2, riskLevel: "Low" },
-  { ip: "10.168.142.195", count: 2, riskLevel: "Low" },
-  { ip: "10.168.50.140", count: 2, riskLevel: "Low" },
-  { ip: "10.168.1.222", count: 1, riskLevel: "Low" },
-  { ip: "10.168.53.17", count: 1, riskLevel: "Low" },
-  { ip: "10.168.2.76", count: 1, riskLevel: "Low" },
-  { ip: "10.168.2.146", count: 1, riskLevel: "Low" },
-  { ip: "10.168.50.75", count: 1, riskLevel: "Low" }
-];
+interface EOLIPData {
+  ip_address: string;
+  seol_component_count: number;
+  risk_level: string;
+}
 
 export default function EOLIPs() {
+  const { data: eolIPs, isLoading } = useQuery({
+    queryKey: ['eol-ips'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('eol_ip')
+        .select('*')
+        .order('seol_component_count', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching EOL IPs:', error);
+        throw error;
+      }
+      
+      return data as EOLIPData[];
+    }
+  });
+
+  // Calculate statistics
+  const stats = eolIPs ? {
+    totalIPsWithSEoLComponents: eolIPs.length,
+    averageSEoLComponentsPerIP: eolIPs.length > 0 ? 
+      (eolIPs.reduce((sum, ip) => sum + ip.seol_component_count, 0) / eolIPs.length).toFixed(2) : 0,
+    maximumSEoLComponentsOnSingleIP: eolIPs.length > 0 ? 
+      Math.max(...eolIPs.map(ip => ip.seol_component_count)) : 0,
+    ipsWithOneSEoLComponent: eolIPs.filter(ip => ip.seol_component_count === 1).length,
+    ipsWithTwoToFiveSEoLComponents: eolIPs.filter(ip => ip.seol_component_count >= 2 && ip.seol_component_count <= 5).length,
+    ipsWithMoreThanFiveSEoLComponents: eolIPs.filter(ip => ip.seol_component_count > 5).length
+  } : {
+    totalIPsWithSEoLComponents: 0,
+    averageSEoLComponentsPerIP: 0,
+    maximumSEoLComponentsOnSingleIP: 0,
+    ipsWithOneSEoLComponent: 0,
+    ipsWithTwoToFiveSEoLComponents: 0,
+    ipsWithMoreThanFiveSEoLComponents: 0
+  };
+
+  // Get top 10 IPs for chart
+  const topIPsForChart = eolIPs ? eolIPs.slice(0, 10) : [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">EOL IPs</h1>
+          <p className="text-muted-foreground">IP address analysis for end-of-life component tracking</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading EOL IP data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -89,29 +78,29 @@ export default function EOLIPs() {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Total IPs with SEoL Components</span>
-              <span className="font-bold">{seolIPStats.totalIPsWithSEoLComponents}</span>
+              <span className="font-bold">{stats.totalIPsWithSEoLComponents}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Average SEoL Components per IP</span>
-              <span className="font-bold">{seolIPStats.averageSEoLComponentsPerIP}</span>
+              <span className="font-bold">{stats.averageSEoLComponentsPerIP}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Maximum SEoL Components on Single IP</span>
-              <span className="font-bold">{seolIPStats.maximumSEoLComponentsOnSingleIP}</span>
+              <span className="font-bold">{stats.maximumSEoLComponentsOnSingleIP}</span>
             </div>
           </div>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">IPs with 1 SEoL Component</span>
-              <span className="font-bold">{seolIPStats.ipsWithOneSEoLComponent}</span>
+              <span className="font-bold">{stats.ipsWithOneSEoLComponent}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">IPs with 2-5 SEoL Components</span>
-              <span className="font-bold">{seolIPStats.ipsWithTwoToFiveSEoLComponents}</span>
+              <span className="font-bold">{stats.ipsWithTwoToFiveSEoLComponents}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">IPs with &gt;5 SEoL Components</span>
-              <span className="font-bold">{seolIPStats.ipsWithMoreThanFiveSEoLComponents}</span>
+              <span className="font-bold">{stats.ipsWithMoreThanFiveSEoLComponents}</span>
             </div>
           </div>
         </div>
@@ -134,16 +123,16 @@ export default function EOLIPs() {
               <tbody>
                 {topIPsForChart.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-4 font-mono text-sm">{item.ip}</td>
-                    <td className="py-3 px-4 text-center font-bold">{item.count}</td>
+                    <td className="py-3 px-4 font-mono text-sm">{item.ip_address}</td>
+                    <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>
                     <td className="py-3 px-4 text-center">
                       <Badge variant={
-                        item.riskLevel === "Critical" ? "destructive" : 
-                        item.riskLevel === "High" ? "default" : 
-                        item.riskLevel === "Medium" ? "secondary" :
+                        item.risk_level === "Critical" ? "destructive" : 
+                        item.risk_level === "High" ? "default" : 
+                        item.risk_level === "Medium" ? "secondary" :
                         "outline"
                       }>
-                        {item.riskLevel}
+                        {item.risk_level}
                       </Badge>
                     </td>
                   </tr>
@@ -161,7 +150,7 @@ export default function EOLIPs() {
               <BarChart data={topIPsForChart} layout="vertical" margin={{ top: 5, right: 30, left: 120, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis type="number" stroke="#9ca3af" />
-                <YAxis type="category" dataKey="ip" stroke="#9ca3af" fontSize={10} width={110} />
+                <YAxis type="category" dataKey="ip_address" stroke="#9ca3af" fontSize={10} width={110} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "#1f2937", 
@@ -171,7 +160,7 @@ export default function EOLIPs() {
                   labelFormatter={(value) => `IP: ${value}`}
                   formatter={(value, name) => [`${value}`, "SEoL Components"]}
                 />
-                <Bar dataKey="count" fill="#ef4444" />
+                <Bar dataKey="seol_component_count" fill="#ef4444" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -191,18 +180,18 @@ export default function EOLIPs() {
               </tr>
             </thead>
             <tbody>
-              {completeIPsList.map((item, index) => (
+              {eolIPs?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="py-3 px-4 font-mono text-sm">{item.ip}</td>
-                  <td className="py-3 px-4 text-center font-bold">{item.count}</td>
+                  <td className="py-3 px-4 font-mono text-sm">{item.ip_address}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>
                   <td className="py-3 px-4 text-center">
                     <Badge variant={
-                      item.riskLevel === "Critical" ? "destructive" : 
-                      item.riskLevel === "High" ? "default" : 
-                      item.riskLevel === "Medium" ? "secondary" :
+                      item.risk_level === "Critical" ? "destructive" : 
+                      item.risk_level === "High" ? "default" : 
+                      item.risk_level === "Medium" ? "secondary" :
                       "outline"
                     }>
-                      {item.riskLevel}
+                      {item.risk_level}
                     </Badge>
                   </td>
                 </tr>

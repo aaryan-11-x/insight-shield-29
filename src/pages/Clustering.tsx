@@ -1,103 +1,62 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const topClustersData = [
-  { product: "Microsoft", vulnerabilities: 29205, color: "#dc2626" },
-  { product: "Miscellaneous", vulnerabilities: 15112, color: "#ea580c" },
-  { product: "SSL/TLS_Certificate", vulnerabilities: 5622, color: "#ca8a04" },
-  { product: "Config", vulnerabilities: 3356, color: "#16a34a" },
-  { product: "Database", vulnerabilities: 1993, color: "#2563eb" },
-];
-
-const detailedClustersData = [
-  {
-    product: "Microsoft",
-    total: 29205,
-    critical: 1960,
-    high: 1578,
-    medium: 28,
-    low: 5395,
-    affectedHosts: 359,
-    cveCount: 210,
-    kevCount: 46,
-    commonVulns: "Microsoft Windows Remote Listeners Enumeration (WMI); KB5048661: Windows 10 version 1809 / Windows Server 2019 Security Update (December 2024); Security Updates for Microsoft SQL Server (November 2024)"
-  },
-  {
-    product: "Miscellaneous",
-    total: 15112,
-    critical: 69,
-    high: 249,
-    medium: 393,
-    low: 6872,
-    affectedHosts: 359,
-    cveCount: 80,
-    kevCount: 8,
-    commonVulns: "HyperText Transfer Protocol (HTTP) Information; Web Application Cookies Are Expired; HTTP Server Type and Version"
-  },
-  {
-    product: "SSL/TLS_Certificate",
-    total: 5622,
-    critical: 18,
-    high: 285,
-    medium: 1558,
-    low: 1667,
-    affectedHosts: 359,
-    cveCount: 6,
-    kevCount: 0,
-    commonVulns: "SSL Cipher Suites Supported; SSL Certificate 'commonName' Mismatch; SSL Certificate with Wrong Hostname"
-  },
-  {
-    product: "Config",
-    total: 3356,
-    critical: 0,
-    high: 0,
-    medium: 0,
-    low: 274,
-    affectedHosts: 359,
-    cveCount: 0,
-    kevCount: 0,
-    commonVulns: "Windows DNS Server Enumeration; Microsoft Remote Desktop Connection Installed; Microsoft Internet Explorer Installed"
-  },
-  {
-    product: "Database",
-    total: 1993,
-    critical: 12,
-    high: 1313,
-    medium: 2,
-    low: 125,
-    affectedHosts: 171,
-    cveCount: 41,
-    kevCount: 0,
-    commonVulns: "Security Updates for Microsoft SQL Server (November 2024); Microsoft ODBC Driver for SQL Server Installed (Windows); Microsoft OLE DB Driver for SQL Server Installed (Windows)"
-  },
-  {
-    product: "Virtualization",
-    total: 761,
-    critical: 0,
-    high: 23,
-    medium: 3,
-    low: 0,
-    affectedHosts: 333,
-    cveCount: 6,
-    kevCount: 0,
-    commonVulns: "VMware Virtual Machine Detection; VMware Tools Detection; Citrix Virtual Apps and Desktops Installed"
-  },
-  {
-    product: "Microsoft_NET",
-    total: 686,
-    critical: 163,
-    high: 59,
-    medium: 7,
-    low: 0,
-    affectedHosts: 359,
-    cveCount: 15,
-    kevCount: 0,
-    commonVulns: "Microsoft .NET Security Rollup Enumeration; ASP.NET Core SEoL; Microsoft .NET Core SEoL"
-  }
-];
+interface VulnerabilityClusteringData {
+  product_service: string;
+  total_vulnerabilities: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  affected_hosts: number;
+  cve_count: number;
+  kev_count: number;
+  common_vulnerabilities: string | null;
+}
 
 export default function Clustering() {
+  const { data: clusteringData, isLoading } = useQuery({
+    queryKey: ['vulnerability-clustering'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vulnerability_clustering')
+        .select('*')
+        .order('total_vulnerabilities', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching vulnerability clustering data:', error);
+        throw error;
+      }
+      
+      return data as VulnerabilityClusteringData[];
+    }
+  });
+
+  // Get top 5 clusters for pie chart
+  const topClustersData = clusteringData ? 
+    clusteringData.slice(0, 5).map((item, index) => ({
+      product: item.product_service,
+      vulnerabilities: item.total_vulnerabilities,
+      color: ["#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#2563eb"][index] || "#6b7280"
+    })) : [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
+          <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading vulnerability clustering data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -192,10 +151,10 @@ export default function Clustering() {
               </tr>
             </thead>
             <tbody>
-              {detailedClustersData.map((item, index) => (
+              {clusteringData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
-                  <td className="py-3 px-2 font-medium">{item.product}</td>
-                  <td className="py-3 px-2 text-center font-bold">{item.total.toLocaleString()}</td>
+                  <td className="py-3 px-2 font-medium">{item.product_service}</td>
+                  <td className="py-3 px-2 text-center font-bold">{item.total_vulnerabilities.toLocaleString()}</td>
                   <td className="py-3 px-2 text-center">
                     <Badge variant={item.critical > 0 ? "destructive" : "secondary"}>
                       {item.critical}
@@ -208,10 +167,10 @@ export default function Clustering() {
                   </td>
                   <td className="py-3 px-2 text-center">{item.medium}</td>
                   <td className="py-3 px-2 text-center">{item.low}</td>
-                  <td className="py-3 px-2 text-center">{item.affectedHosts}</td>
-                  <td className="py-3 px-2 text-center">{item.cveCount}</td>
-                  <td className="py-3 px-2 text-center">{item.kevCount}</td>
-                  <td className="py-3 px-2 text-xs">{item.commonVulns}</td>
+                  <td className="py-3 px-2 text-center">{item.affected_hosts}</td>
+                  <td className="py-3 px-2 text-center">{item.cve_count}</td>
+                  <td className="py-3 px-2 text-center">{item.kev_count}</td>
+                  <td className="py-3 px-2 text-xs">{item.common_vulnerabilities || 'N/A'}</td>
                 </tr>
               ))}
             </tbody>

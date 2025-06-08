@@ -66,6 +66,24 @@ export type Database = {
         }
         Relationships: []
       }
+      eol_ip: {
+        Row: {
+          ip_address: unknown
+          risk_level: string
+          seol_component_count: number
+        }
+        Insert: {
+          ip_address: unknown
+          risk_level: string
+          seol_component_count: number
+        }
+        Update: {
+          ip_address?: unknown
+          risk_level?: string
+          seol_component_count?: number
+        }
+        Relationships: []
+      }
       eol_summary: {
         Row: {
           apache_log4j_count: number
@@ -132,6 +150,24 @@ export type Database = {
           total_count?: number
           total_unique_components?: number
           unique_eol_versions?: number
+        }
+        Relationships: []
+      }
+      eol_versions: {
+        Row: {
+          instance_count: number
+          software_type: string
+          version: string
+        }
+        Insert: {
+          instance_count: number
+          software_type: string
+          version: string
+        }
+        Update: {
+          instance_count?: number
+          software_type?: string
+          version?: string
         }
         Relationships: []
       }
@@ -244,6 +280,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vulnerability_clustering: {
+        Row: {
+          affected_hosts: number
+          common_vulnerabilities: string | null
+          critical: number
+          cve_count: number
+          high: number
+          kev_count: number
+          low: number
+          medium: number
+          product_service: string
+          total_vulnerabilities: number
+        }
+        Insert: {
+          affected_hosts: number
+          common_vulnerabilities?: string | null
+          critical: number
+          cve_count: number
+          high: number
+          kev_count: number
+          low: number
+          medium: number
+          product_service: string
+          total_vulnerabilities: number
+        }
+        Update: {
+          affected_hosts?: number
+          common_vulnerabilities?: string | null
+          critical?: number
+          cve_count?: number
+          high?: number
+          kev_count?: number
+          low?: number
+          medium?: number
+          product_service?: string
+          total_vulnerabilities?: number
+        }
+        Relationships: []
       }
     }
     Views: {
