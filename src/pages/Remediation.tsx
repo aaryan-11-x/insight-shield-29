@@ -1,3 +1,4 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,9 +32,6 @@ export default function Remediation() {
     }
   });
 
-  // Get top 10 remediations for chart
-  const top10Remediations = remediationData?.slice(0, 10) || [];
-
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -53,42 +51,6 @@ export default function Remediation() {
       <div>
         <h1 className="text-3xl font-bold">Remediation Insights</h1>
         <p className="text-muted-foreground">Track remediation progress and prioritize actions</p>
-      </div>
-
-      {/* Top 10 Remediations Chart */}
-      <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">Top 10 Remediations by Observations</h3>
-        <div className="h-96">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={top10Remediations} layout="vertical" margin={{ left: 300, right: 30, top: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis type="number" stroke="#9ca3af" />
-              <YAxis 
-                dataKey="remediation" 
-                type="category" 
-                stroke="#9ca3af" 
-                width={290}
-                fontSize={11}
-                tick={{ fontSize: 11 }}
-                interval={0}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "#1f2937", 
-                  border: "1px solid #374151",
-                  borderRadius: "8px"
-                }} 
-              />
-              <Bar 
-                dataKey="observations_impacted" 
-                fill="#10b981"
-                stroke="#10b981"
-                strokeWidth={1}
-                radius={[0, 4, 4, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
       </div>
 
       {/* Remediation Insights Table */}

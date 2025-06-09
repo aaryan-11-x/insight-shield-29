@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Questionnaire from "./pages/Questionnaire";
 import InstanceChoice from "./pages/InstanceChoice";
@@ -44,13 +45,14 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/questionnaire" element={<Questionnaire />} />
           <Route path="/instance-choice" element={<InstanceChoice />} />
           <Route path="/create-instance" element={<CreateInstance />} />
           <Route path="/upload-vulnerabilities" element={<UploadVulnerabilities />} />
           <Route path="/select-instance" element={<SelectInstance />} />
-          <Route path="/*" element={
+          <Route path="/dashboard/*" element={
             <SidebarProvider>
               <div className="min-h-screen flex w-full">
                 <AppSidebar />

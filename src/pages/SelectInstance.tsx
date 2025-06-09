@@ -6,7 +6,22 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Server, Shield, AlertTriangle, ArrowLeft } from "lucide-react";
+<<<<<<< HEAD
 import { supabase } from "@/integrations/supabase/client";
+=======
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+
+interface Instance {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  vulnerabilities: number;
+  riskLevel: string;
+  lastScan: string;
+}
+>>>>>>> a1c6a70588cc1b8e32f83bd0114e1659f009b302
 
 interface Instance {
   id: number;
@@ -18,21 +33,32 @@ interface Instance {
 }
 
 export default function SelectInstance() {
+<<<<<<< HEAD
   const [selectedInstance, setSelectedInstance] = useState("");
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
+=======
+>>>>>>> a1c6a70588cc1b8e32f83bd0114e1659f009b302
   const navigate = useNavigate();
+  const [selectedInstance, setSelectedInstance] = useState<string>("");
 
+<<<<<<< HEAD
   useEffect(() => {
     fetchInstances();
   }, []);
 
   const fetchInstances = async () => {
     try {
+=======
+  const { data: instances, isLoading } = useQuery({
+    queryKey: ['instances'],
+    queryFn: async () => {
+>>>>>>> a1c6a70588cc1b8e32f83bd0114e1659f009b302
       const { data, error } = await supabase
         .from('instances')
         .select('*')
         .order('created_at', { ascending: false });
+<<<<<<< HEAD
 
       if (error) throw error;
       setInstances(data || []);
@@ -48,6 +74,21 @@ export default function SelectInstance() {
       // Store the selected instance ID in localStorage
       localStorage.setItem('currentInstanceId', selectedInstance);
       navigate("/");
+=======
+      
+      if (error) {
+        console.error('Error fetching instances:', error);
+        throw error;
+      }
+      
+      return data as Instance[];
+    }
+  });
+
+  const handleSelect = () => {
+    if (selectedInstance) {
+      navigate("/dashboard");
+>>>>>>> a1c6a70588cc1b8e32f83bd0114e1659f009b302
     }
   };
 
@@ -140,7 +181,7 @@ export default function SelectInstance() {
             </RadioGroup>
 
             <Button 
-              onClick={handleContinue}
+              onClick={handleSelect}
               disabled={!selectedInstance}
               className="w-full mt-6"
             >

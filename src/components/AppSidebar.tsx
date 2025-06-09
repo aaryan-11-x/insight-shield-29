@@ -32,117 +32,117 @@ import {
 const menuItems = [
   {
     title: "Dashboard Overview",
-    url: "/",
+    url: "/dashboard",
     icon: BarChart,
   },
   {
     title: "Prioritization Insights",
-    url: "/prioritization",
+    url: "/dashboard/prioritization",
     icon: Target,
     subItems: [
       {
         title: "Overall Summary",
-        url: "/prioritization",
+        url: "/dashboard/prioritization",
       },
       {
         title: "Exploitability Scoring",
-        url: "/exploitability",
+        url: "/dashboard/exploitability",
       },
       {
         title: "Ageing of Vulnerability",
-        url: "/vulnerability-aging",
+        url: "/dashboard/vulnerability-aging",
       },
       {
         title: "Most Exploitable",
-        url: "/most-exploitable",
+        url: "/dashboard/most-exploitable",
       },
     ],
   },
   {
     title: "Remediation Summary",
-    url: "/remediation",
+    url: "/dashboard/remediation",
     icon: Wrench,
     subItems: [
       {
         title: "Remediation Insights",
-        url: "/remediation",
+        url: "/dashboard/remediation",
       },
       {
         title: "Remediation-Unique Vulnerabilities",
-        url: "/remediation-unique",
+        url: "/dashboard/remediation-unique",
       },
       {
         title: "Patch Details",
-        url: "/patch-details",
+        url: "/dashboard/patch-details",
       },
       {
         title: "MTTM by Severity",
-        url: "/mttm-severity",
+        url: "/dashboard/mttm-severity",
       },
     ],
   },
   {
     title: "Operational Insights",
-    url: "/operational",
+    url: "/dashboard/operational",
     icon: Grid2x2,
     subItems: [
       {
         title: "IP Insights",
-        url: "/ip-insights",
+        url: "/dashboard/ip-insights",
       },
       {
         title: "Vulnerability Clustering",
-        url: "/clustering",
+        url: "/dashboard/clustering",
       },
       {
         title: "Unique Vulnerabilities",
-        url: "/unique-vulnerabilities",
+        url: "/dashboard/unique-vulnerabilities",
       },
     ],
   },
   {
     title: "Higher Management Insights",
-    url: "/management",
+    url: "/dashboard/management",
     icon: TrendingUp,
     subItems: [
       {
         title: "Risk Summary",
-        url: "/risk-summary",
+        url: "/dashboard/risk-summary",
       },
       {
         title: "CVE Summary",
-        url: "/cve-summary",
+        url: "/dashboard/cve-summary",
       },
       {
         title: "Hosts Summary",
-        url: "/hosts-summary",
+        url: "/dashboard/hosts-summary",
       },
       {
         title: "Risk Trajectory",
-        url: "/risk-trajectory",
+        url: "/dashboard/risk-trajectory",
       },
     ],
   },
   {
     title: "SEoL Analysis",
-    url: "/seol",
+    url: "/dashboard/seol",
     icon: AlertTriangle,
     subItems: [
       {
         title: "EoL Summary",
-        url: "/eol-summary",
+        url: "/dashboard/eol-summary",
       },
       {
         title: "EoL Components",
-        url: "/eol-components",
+        url: "/dashboard/eol-components",
       },
       {
         title: "EOL IPs",
-        url: "/eol-ips",
+        url: "/dashboard/eol-ips",
       },
       {
         title: "EOL Versions",
-        url: "/eol-versions",
+        url: "/dashboard/eol-versions",
       },
     ],
   },
@@ -164,7 +164,7 @@ export function AppSidebar() {
 
   const handleLogoutCancel = () => {
     setShowLogoutDialog(false);
-    navigate("/");
+    // Stay on current page - don't navigate anywhere
   };
 
   return (
