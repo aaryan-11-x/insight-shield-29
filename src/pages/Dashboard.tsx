@@ -136,10 +136,10 @@ export default function Dashboard() {
         { data: remediationData }
       ] = await Promise.all([
         supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }),
-        supabase.from('exploitability_scoring').select('exploitability_score').gt('exploitability_score', 7),
+        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 7),
         supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true),
         supabase.from('eol_components').select('name', { count: 'exact' }),
-        supabase.from('remediation_insights').select('observations_impacted')
+        supabase.from('remediation_insights').select('id', { count: 'exact' })
       ]);
 
       return {
@@ -147,7 +147,7 @@ export default function Dashboard() {
         highExploitability: exploitabilityData?.length || 0,
         kevListed: kevData?.length || 0,
         eolComponents: eolData?.length || 0,
-        totalRemediations: remediationData?.reduce((sum, item) => sum + item.observations_impacted, 0) || 0
+        totalRemediations: remediationData?.length || 0
       };
     }
   });
@@ -177,7 +177,7 @@ export default function Dashboard() {
           color="default"
         />
         <MetricCard
-          title="High Exploitability (>7)"
+          title="High Exploitability (≥7)"
           value={stats?.highExploitability || 0}
           color="critical"
           trend="up"

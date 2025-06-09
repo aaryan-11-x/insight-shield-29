@@ -57,14 +57,14 @@ export default function Remediation() {
         <h3 className="text-lg font-semibold mb-4">Top 10 Remediations by Observations</h3>
         <div className="h-96">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={top10Remediations} layout="horizontal" margin={{ left: 250, right: 30, top: 20, bottom: 20 }}>
+            <BarChart data={top10Remediations} layout="vertical" margin={{ left: 300, right: 30, top: 20, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis type="number" stroke="#9ca3af" />
               <YAxis 
                 dataKey="remediation" 
                 type="category" 
                 stroke="#9ca3af" 
-                width={240}
+                width={290}
                 fontSize={11}
                 tick={{ fontSize: 11 }}
                 interval={0}
@@ -81,6 +81,7 @@ export default function Remediation() {
                 fill="#10b981"
                 stroke="#10b981"
                 strokeWidth={1}
+                radius={[0, 4, 4, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
