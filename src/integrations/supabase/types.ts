@@ -9,6 +9,39 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ageing_of_vulnerability: {
+        Row: {
+          cve: string
+          cve_published_date: string | null
+          days_after_discovery: number | null
+          host: string
+          id: number
+          name: string
+          plugin_id: number
+          risk: string
+        }
+        Insert: {
+          cve: string
+          cve_published_date?: string | null
+          days_after_discovery?: number | null
+          host: string
+          id?: number
+          name: string
+          plugin_id: number
+          risk: string
+        }
+        Update: {
+          cve?: string
+          cve_published_date?: string | null
+          days_after_discovery?: number | null
+          host?: string
+          id?: number
+          name?: string
+          plugin_id?: number
+          risk?: string
+        }
+        Relationships: []
+      }
       cve_summary: {
         Row: {
           count: number | null
@@ -231,6 +264,150 @@ export type Database = {
         }
         Relationships: []
       }
+      ip_insights: {
+        Row: {
+          critical: number
+          exploitability_score: number
+          high: number
+          hostname: string | null
+          ip_address: unknown
+          kev_count: number
+          last_scan_date: string | null
+          low: number
+          medium: number
+          most_common_category: string | null
+          total_vulnerabilities: number
+        }
+        Insert: {
+          critical: number
+          exploitability_score: number
+          high: number
+          hostname?: string | null
+          ip_address: unknown
+          kev_count: number
+          last_scan_date?: string | null
+          low: number
+          medium: number
+          most_common_category?: string | null
+          total_vulnerabilities: number
+        }
+        Update: {
+          critical?: number
+          exploitability_score?: number
+          high?: number
+          hostname?: string | null
+          ip_address?: unknown
+          kev_count?: number
+          last_scan_date?: string | null
+          low?: number
+          medium?: number
+          most_common_category?: string | null
+          total_vulnerabilities?: number
+        }
+        Relationships: []
+      }
+      most_exploitable: {
+        Row: {
+          critical_count: number
+          cumulative_exploitability: number
+          high_count: number
+          host: string
+          id: number
+          low_count: number
+          medium_count: number
+          total_vulnerabilities: number
+        }
+        Insert: {
+          critical_count: number
+          cumulative_exploitability: number
+          high_count: number
+          host: string
+          id?: number
+          low_count: number
+          medium_count: number
+          total_vulnerabilities: number
+        }
+        Update: {
+          critical_count?: number
+          cumulative_exploitability?: number
+          high_count?: number
+          host?: string
+          id?: number
+          low_count?: number
+          medium_count?: number
+          total_vulnerabilities?: number
+        }
+        Relationships: []
+      }
+      mttm_by_severity: {
+        Row: {
+          average_mttm_days: number
+          id: number
+          risk_severity: string
+          vulnerability_count: number
+        }
+        Insert: {
+          average_mttm_days: number
+          id?: number
+          risk_severity: string
+          vulnerability_count: number
+        }
+        Update: {
+          average_mttm_days?: number
+          id?: number
+          risk_severity?: string
+          vulnerability_count?: number
+        }
+        Relationships: []
+      }
+      patch_details: {
+        Row: {
+          cve: string
+          id: number
+          patch_status: string
+          source: string | null
+          tags: string | null
+          url: string | null
+        }
+        Insert: {
+          cve: string
+          id?: number
+          patch_status: string
+          source?: string | null
+          tags?: string | null
+          url?: string | null
+        }
+        Update: {
+          cve?: string
+          id?: number
+          patch_status?: string
+          source?: string | null
+          tags?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      remediation_to_unique_vulnerabilities: {
+        Row: {
+          id: number
+          remediation: string
+          risk_rating: string
+          unique_vulnerability: string
+        }
+        Insert: {
+          id?: number
+          remediation: string
+          risk_rating: string
+          unique_vulnerability: string
+        }
+        Update: {
+          id?: number
+          remediation?: string
+          risk_rating?: string
+          unique_vulnerability?: string
+        }
+        Relationships: []
+      }
       risk_summary: {
         Row: {
           count: number
@@ -280,6 +457,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      unique_vulnerabilities: {
+        Row: {
+          affected_hosts: number
+          cve: string | null
+          cvss_score: string | null
+          epss_score: string | null
+          instance_count: number
+          kev_listed: boolean
+          remediation: string | null
+          severity: string
+          vulnerability_name: string
+        }
+        Insert: {
+          affected_hosts: number
+          cve?: string | null
+          cvss_score?: string | null
+          epss_score?: string | null
+          instance_count: number
+          kev_listed: boolean
+          remediation?: string | null
+          severity: string
+          vulnerability_name: string
+        }
+        Update: {
+          affected_hosts?: number
+          cve?: string | null
+          cvss_score?: string | null
+          epss_score?: string | null
+          instance_count?: number
+          kev_listed?: boolean
+          remediation?: string | null
+          severity?: string
+          vulnerability_name?: string
+        }
+        Relationships: []
       }
       vulnerability_clustering: {
         Row: {

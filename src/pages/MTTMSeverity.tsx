@@ -1,14 +1,57 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const mttmData = [
-  { severity: "Critical", vulnerabilityCount: 2678, averageMTTM: 210.7, color: "#dc2626" },
-  { severity: "High", vulnerabilityCount: 2336, averageMTTM: 702.7, color: "#ea580c" },
-  { severity: "Medium", vulnerabilityCount: 2104, averageMTTM: 3054.5, color: "#ca8a04" },
-  { severity: "Low", vulnerabilityCount: 42, averageMTTM: 3462.2, color: "#16a34a" },
-];
+interface MTTMData {
+  id: number;
+  risk_severity: string;
+  vulnerability_count: number;
+  average_mttm_days: number;
+}
 
 export default function MTTMSeverity() {
+  const { data: mttmData, isLoading } = useQuery({
+    queryKey: ['mttm-by-severity'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('mttm_by_severity')
+        .select('*')
+        .order('id');
+      
+      if (error) {
+        console.error('Error fetching MTTM by severity data:', error);
+        throw error;
+      }
+      
+      return data as MTTMData[];
+    }
+  });
+
+  // Transform data for chart display
+  const chartData = mttmData?.map(item => ({
+    severity: item.risk_severity,
+    vulnerabilityCount: item.vulnerability_count,
+    averageMTTM: item.average_mttm_days,
+    color: item.risk_severity === "Critical" ? "#dc2626" :
+           item.risk_severity === "High" ? "#ea580c" :
+           item.risk_severity === "Medium" ? "#ca8a04" : "#16a34a"
+  })) || [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">MTTM by Severity</h1>
+          <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading MTTM data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +73,7 @@ export default function MTTMSeverity() {
                 </tr>
               </thead>
               <tbody>
-                {mttmData.map((item, index) => (
+                {chartData.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
@@ -55,7 +98,7 @@ export default function MTTMSeverity() {
           <h3 className="text-lg font-semibold mb-4">Vulnerability Count by Severity</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mttmData}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="severity" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />

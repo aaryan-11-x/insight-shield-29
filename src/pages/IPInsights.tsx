@@ -1,30 +1,79 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const ipInsightsData = [
-  { ip: "10.168.9.33", hostname: "", total: 413, critical: 5, high: 16, medium: 31, low: 158, kev: 0, exploitability: 288, category: "Miscellaneous", lastScan: "N/A" },
-  { ip: "10.168.50.77", hostname: "", total: 350, critical: 161, high: 46, medium: 10, low: 39, kev: 1, exploitability: 844, category: "Microsoft", lastScan: "N/A" },
-  { ip: "10.168.50.140", hostname: "", total: 344, critical: 83, high: 65, medium: 31, low: 52, kev: 9, exploitability: 668, category: "Microsoft", lastScan: "N/A" },
-  { ip: "10.168.51.82", hostname: "", total: 319, critical: 97, high: 10, medium: 24, low: 58, kev: 1, exploitability: 527, category: "Microsoft", lastScan: "N/A" },
-  { ip: "10.168.9.6", hostname: "", total: 279, critical: 0, high: 67, medium: 17, low: 61, kev: 0, exploitability: 296, category: "Microsoft", lastScan: "N/A" },
-  { ip: "10.168.2.69", hostname: "", total: 260, critical: 0, high: 1, medium: 7, low: 78, kev: 0, exploitability: 95, category: "Microsoft", lastScan: "N/A" },
-  { ip: "10.168.1.235", hostname: "", total: 259, critical: 67, high: 46, medium: 15, low: 34, kev: 5, exploitability: 485, category: "Microsoft", lastScan: "N/A" },
-];
-
-const vulnerabilityDistributionData = [
-  { name: "Critical", value: 413, color: "#dc2626" },
-  { name: "High", value: 251, color: "#ea580c" },
-  { name: "Medium", value: 135, color: "#ca8a04" },
-  { name: "Low", value: 480, color: "#16a34a" },
-];
-
-const hostCategoriesData = [
-  { name: "Microsoft", value: 5, color: "#3b82f6" },
-  { name: "Miscellaneous", value: 2, color: "#8b5cf6" },
-];
+interface IPInsightsData {
+  ip_address: string;
+  hostname: string | null;
+  total_vulnerabilities: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  kev_count: number;
+  exploitability_score: number;
+  most_common_category: string | null;
+  last_scan_date: string | null;
+}
 
 export default function IPInsights() {
+  const { data: ipInsightsData, isLoading } = useQuery({
+    queryKey: ['ip-insights'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ip_insights')
+        .select('*')
+        .order('total_vulnerabilities', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching IP insights data:', error);
+        throw error;
+      }
+      
+      return data as IPInsightsData[];
+    }
+  });
+
+  // Calculate statistics from the data
+  const stats = ipInsightsData ? {
+    totalHosts: ipInsightsData.length,
+    totalVulnerabilities: ipInsightsData.reduce((sum, host) => sum + host.total_vulnerabilities, 0),
+    hostsWithVulnerabilities: ipInsightsData.filter(host => host.total_vulnerabilities > 0).length,
+    hostsWithCritical: ipInsightsData.filter(host => host.critical > 0).length,
+    hostsWithHigh: ipInsightsData.filter(host => host.high > 0).length,
+    top5Hosts: ipInsightsData.slice(0, 5).map(host => host.ip_address).join(', ')
+  } : {
+    totalHosts: 0,
+    totalVulnerabilities: 0,
+    hostsWithVulnerabilities: 0,
+    hostsWithCritical: 0,
+    hostsWithHigh: 0,
+    top5Hosts: ''
+  };
+
+  const vulnerabilityDistributionData = ipInsightsData ? [
+    { name: "Critical", value: ipInsightsData.reduce((sum, host) => sum + host.critical, 0), color: "#dc2626" },
+    { name: "High", value: ipInsightsData.reduce((sum, host) => sum + host.high, 0), color: "#ea580c" },
+    { name: "Medium", value: ipInsightsData.reduce((sum, host) => sum + host.medium, 0), color: "#ca8a04" },
+    { name: "Low", value: ipInsightsData.reduce((sum, host) => sum + host.low, 0), color: "#16a34a" },
+  ] : [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">IP Insights</h1>
+          <p className="text-muted-foreground">This sheet provides a detailed breakdown of vulnerabilities per IP, facilitating operational planning and remediation prioritization</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading IP insights data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -38,7 +87,7 @@ export default function IPInsights() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Hosts</p>
-              <p className="text-3xl font-bold">359</p>
+              <p className="text-3xl font-bold">{stats.totalHosts}</p>
             </div>
           </div>
         </div>
@@ -46,7 +95,7 @@ export default function IPInsights() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Vulnerabilities</p>
-              <p className="text-3xl font-bold">54,655</p>
+              <p className="text-3xl font-bold">{stats.totalVulnerabilities.toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -58,23 +107,23 @@ export default function IPInsights() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="bg-background p-4 rounded border">
             <p className="text-sm text-muted-foreground">Total Hosts Scanned</p>
-            <p className="text-2xl font-bold">359</p>
+            <p className="text-2xl font-bold">{stats.totalHosts}</p>
           </div>
           <div className="bg-background p-4 rounded border">
             <p className="text-sm text-muted-foreground">Hosts with Vulnerabilities</p>
-            <p className="text-2xl font-bold">359 <span className="text-sm text-muted-foreground">(100.0%)</span></p>
+            <p className="text-2xl font-bold">{stats.hostsWithVulnerabilities} <span className="text-sm text-muted-foreground">({stats.totalHosts > 0 ? ((stats.hostsWithVulnerabilities / stats.totalHosts) * 100).toFixed(1) : 0}%)</span></p>
           </div>
           <div className="bg-background p-4 rounded border">
             <p className="text-sm text-muted-foreground">Hosts with Critical Vulnerabilities</p>
-            <p className="text-2xl font-bold">90 <span className="text-sm text-muted-foreground">(25.1%)</span></p>
+            <p className="text-2xl font-bold">{stats.hostsWithCritical} <span className="text-sm text-muted-foreground">({stats.totalHosts > 0 ? ((stats.hostsWithCritical / stats.totalHosts) * 100).toFixed(1) : 0}%)</span></p>
           </div>
           <div className="bg-background p-4 rounded border">
             <p className="text-sm text-muted-foreground">Hosts with High Vulnerabilities</p>
-            <p className="text-2xl font-bold">277 <span className="text-sm text-muted-foreground">(77.2%)</span></p>
+            <p className="text-2xl font-bold">{stats.hostsWithHigh} <span className="text-sm text-muted-foreground">({stats.totalHosts > 0 ? ((stats.hostsWithHigh / stats.totalHosts) * 100).toFixed(1) : 0}%)</span></p>
           </div>
           <div className="bg-background p-4 rounded border md:col-span-2">
             <p className="text-sm text-muted-foreground">Top 5 Hosts Need Remediation</p>
-            <p className="text-lg font-mono">10.168.9.33, 10.168.50.77, 10.168.50.140, 10.168.51.82, 10.168.9.6</p>
+            <p className="text-lg font-mono">{stats.top5Hosts}</p>
           </div>
         </div>
       </div>
@@ -116,15 +165,15 @@ export default function IPInsights() {
 
         {/* Host Categories */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Host Categories Distribution</h3>
+          <h3 className="text-lg font-semibold mb-4">Top Hosts by Vulnerability Count</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ipInsightsData.slice(0, 7)}>
+              <BarChart data={ipInsightsData?.slice(0, 7)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="ip" stroke="#9ca3af" fontSize={10} angle={-45} textAnchor="end" height={80} />
+                <XAxis dataKey="ip_address" stroke="#9ca3af" fontSize={10} angle={-45} textAnchor="end" height={80} />
                 <YAxis stroke="#9ca3af" />
                 <Tooltip />
-                <Bar dataKey="total" fill="#3b82f6" name="Total Vulnerabilities" />
+                <Bar dataKey="total_vulnerabilities" fill="#3b82f6" name="Total Vulnerabilities" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -152,11 +201,11 @@ export default function IPInsights() {
               </tr>
             </thead>
             <tbody>
-              {ipInsightsData.map((item, index) => (
+              {ipInsightsData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
-                  <td className="py-3 px-2 font-mono text-xs">{item.ip}</td>
+                  <td className="py-3 px-2 font-mono text-xs">{item.ip_address}</td>
                   <td className="py-3 px-2">{item.hostname || "—"}</td>
-                  <td className="py-3 px-2 text-center font-bold">{item.total}</td>
+                  <td className="py-3 px-2 text-center font-bold">{item.total_vulnerabilities}</td>
                   <td className="py-3 px-2 text-center">
                     <Badge variant={item.critical > 0 ? "destructive" : "secondary"}>
                       {item.critical}
@@ -169,10 +218,10 @@ export default function IPInsights() {
                   </td>
                   <td className="py-3 px-2 text-center">{item.medium}</td>
                   <td className="py-3 px-2 text-center">{item.low}</td>
-                  <td className="py-3 px-2 text-center">{item.kev}</td>
-                  <td className="py-3 px-2 text-center font-mono">{item.exploitability}</td>
-                  <td className="py-3 px-2">{item.category}</td>
-                  <td className="py-3 px-2 text-muted-foreground">{item.lastScan}</td>
+                  <td className="py-3 px-2 text-center">{item.kev_count}</td>
+                  <td className="py-3 px-2 text-center font-mono">{item.exploitability_score}</td>
+                  <td className="py-3 px-2">{item.most_common_category || "—"}</td>
+                  <td className="py-3 px-2 text-muted-foreground">{item.last_scan_date || "N/A"}</td>
                 </tr>
               ))}
             </tbody>

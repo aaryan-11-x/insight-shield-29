@@ -2,67 +2,50 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const patchDetailsData = [
-  {
-    cve: "CVE-1999-0524",
-    patchStatus: "Available",
-    source: "cve@mitre.org",
-    url: "http://kb.juniper.net/InfoCenter/index?page=content&id=JSA10705",
-    tags: "Third Party Advisory"
-  },
-  {
-    cve: "CVE-2016-2183",
-    patchStatus: "Available",
-    source: "secalert@redhat.com",
-    url: "http://kb.juniper.net/InfoCenter/index?page=content&id=JSA10759",
-    tags: "Third Party Advisory"
-  },
-  {
-    cve: "CVE-2024-38171",
-    patchStatus: "Available",
-    source: "secure@microsoft.com",
-    url: "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-38171",
-    tags: "Patch, Vendor Advisory"
-  },
-  {
-    cve: "CVE-2024-38229",
-    patchStatus: "Available",
-    source: "secure@microsoft.com",
-    url: "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-38229",
-    tags: "Patch, Vendor Advisory"
-  },
-  {
-    cve: "CVE-2024-43483",
-    patchStatus: "Available",
-    source: "secure@microsoft.com",
-    url: "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43483",
-    tags: "Patch, Vendor Advisory"
-  },
-  {
-    cve: "CVE-2024-43484",
-    patchStatus: "Available",
-    source: "secure@microsoft.com",
-    url: "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43484",
-    tags: "Patch, Vendor Advisory"
-  },
-  {
-    cve: "CVE-2024-43485",
-    patchStatus: "Available",
-    source: "secure@microsoft.com",
-    url: "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-43485",
-    tags: "Patch, Vendor Advisory"
-  },
-  {
-    cve: "CVE-2024-49033",
-    patchStatus: "Available",
-    source: "secure@microsoft.com",
-    url: "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-49033",
-    tags: "Patch, Vendor Advisory"
-  }
-];
+interface PatchDetailData {
+  id: number;
+  cve: string;
+  patch_status: string;
+  source: string | null;
+  url: string | null;
+  tags: string | null;
+}
 
 export default function PatchDetails() {
+  const { data: patchDetailsData, isLoading } = useQuery({
+    queryKey: ['patch-details'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('patch_details')
+        .select('*')
+        .order('id');
+      
+      if (error) {
+        console.error('Error fetching patch details data:', error);
+        throw error;
+      }
+      
+      return data as PatchDetailData[];
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Patch Details</h1>
+          <p className="text-muted-foreground">Detailed information about available patches</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading patch details data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -83,40 +66,44 @@ export default function PatchDetails() {
               </tr>
             </thead>
             <tbody>
-              {patchDetailsData.map((item, index) => (
+              {patchDetailsData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                   <td className="py-3 px-4">
                     <code className="text-sm font-mono bg-background px-2 py-1 rounded">{item.cve}</code>
                   </td>
                   <td className="py-3 px-4">
-                    <Badge variant="default">{item.patchStatus}</Badge>
+                    <Badge variant="default">{item.patch_status}</Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="text-sm">{item.source}</span>
+                    <span className="text-sm">{item.source || "—"}</span>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      <a 
-                        href={item.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-400 hover:text-blue-300 underline max-w-xs truncate"
-                      >
-                        {item.url}
-                      </a>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        asChild
-                      >
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4" />
+                    {item.url ? (
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={item.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-400 hover:text-blue-300 underline max-w-xs truncate"
+                        >
+                          {item.url}
                         </a>
-                      </Button>
-                    </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                        >
+                          <a href={item.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="py-3 px-4">
-                    <span className="text-sm">{item.tags}</span>
+                    <span className="text-sm">{item.tags || "—"}</span>
                   </td>
                 </tr>
               ))}
