@@ -6,6 +6,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Server, Shield, AlertTriangle, ArrowLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+
+interface Instance {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  vulnerabilities: number;
+  riskLevel: string;
+  lastScan: string;
+}
 
 const instances = [
   {
@@ -38,12 +50,29 @@ const instances = [
 ];
 
 export default function SelectInstance() {
-  const [selectedInstance, setSelectedInstance] = useState("");
   const navigate = useNavigate();
+  const [selectedInstance, setSelectedInstance] = useState<string>("");
 
-  const handleContinue = () => {
+  const { data: instances, isLoading } = useQuery({
+    queryKey: ['instances'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('instances')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching instances:', error);
+        throw error;
+      }
+      
+      return data as Instance[];
+    }
+  });
+
+  const handleSelect = () => {
     if (selectedInstance) {
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 
@@ -131,7 +160,7 @@ export default function SelectInstance() {
             </RadioGroup>
 
             <Button 
-              onClick={handleContinue}
+              onClick={handleSelect}
               disabled={!selectedInstance}
               className="w-full mt-6"
             >
