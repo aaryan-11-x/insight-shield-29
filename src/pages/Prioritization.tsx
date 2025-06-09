@@ -1,8 +1,39 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+interface PrioritizationInsightData {
+  id: number;
+  metric: string;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+}
+
+interface ExploitabilityScoringData {
+  id: number;
+  exploitability_score: number | null;
+}
+
+interface VulnerabilityAgingData {
+  id: number;
+  days_after_discovery: number | null;
+}
+
+interface MostExploitableData {
+  id: number;
+  host: string;
+  cumulative_exploitability: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+  total_vulnerabilities: number;
+}
 
 const severityData = [
   { name: "Critical", value: 800 },
@@ -69,6 +100,170 @@ const kevLegend = [
 ];
 
 export default function Prioritization() {
+  const { data: prioritizationData, isLoading: prioritizationLoading } = useQuery({
+    queryKey: ['prioritization-insights'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('prioritization_insights')
+        .select('*')
+        .order('id');
+      
+      if (error) {
+        console.error('Error fetching prioritization insights data:', error);
+        throw error;
+      }
+      
+      return data as PrioritizationInsightData[];
+    }
+  });
+
+  const { data: exploitabilityData, isLoading: exploitabilityLoading } = useQuery({
+    queryKey: ['exploitability-scoring-simple'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('exploitability_scoring')
+        .select('id, exploitability_score');
+      
+      if (error) {
+        console.error('Error fetching exploitability data:', error);
+        throw error;
+      }
+      
+      return data as ExploitabilityScoringData[];
+    }
+  });
+
+  const { data: agingData, isLoading: agingLoading } = useQuery({
+    queryKey: ['ageing-of-vulnerability-simple'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ageing_of_vulnerability')
+        .select('id, days_after_discovery');
+      
+      if (error) {
+        console.error('Error fetching aging data:', error);
+        throw error;
+      }
+      
+      return data as VulnerabilityAgingData[];
+    }
+  });
+
+  const { data: mostExploitableData, isLoading: mostExploitableLoading } = useQuery({
+    queryKey: ['most-exploitable-top10'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('most_exploitable')
+        .select('*')
+        .order('cumulative_exploitability', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error('Error fetching most exploitable data:', error);
+        throw error;
+      }
+      
+      return data as MostExploitableData[];
+    }
+  });
+
+  // Transform prioritization data for chart
+  const scoringMetricsChartData = prioritizationData?.map(item => ({
+    metric: item.metric,
+    Critical: item.critical_count,
+    High: item.high_count,
+    Medium: item.medium_count,
+    Low: item.low_count
+  })) || [];
+
+  // Add total row for table
+  const scoringMetrics = prioritizationData ? [
+    ...prioritizationData.map(item => ({
+      metric: item.metric,
+      critical: item.critical_count,
+      high: item.high_count,
+      medium: item.medium_count,
+      low: item.low_count
+    })),
+    {
+      metric: "TOTAL",
+      critical: prioritizationData.reduce((sum, item) => sum + item.critical_count, 0),
+      high: prioritizationData.reduce((sum, item) => sum + item.high_count, 0),
+      medium: prioritizationData.reduce((sum, item) => sum + item.medium_count, 0),
+      low: prioritizationData.reduce((sum, item) => sum + item.low_count, 0)
+    }
+  ] : [];
+
+  // Calculate exploitability distribution
+  const exploitabilityDistData = exploitabilityData ? (() => {
+    const ranges = {
+      "High (9.0-10.0)": 0,
+      "Medium (7.0-8.9)": 0,
+      "Low (0.1-6.9)": 0
+    };
+
+    exploitabilityData.forEach(item => {
+      const score = item.exploitability_score;
+      if (score !== null) {
+        if (score >= 9.0) {
+          ranges["High (9.0-10.0)"]++;
+        } else if (score >= 7.0) {
+          ranges["Medium (7.0-8.9)"]++;
+        } else if (score >= 0.1) {
+          ranges["Low (0.1-6.9)"]++;
+        }
+      }
+    });
+
+    return Object.entries(ranges).map(([name, value]) => ({
+      name,
+      value,
+      color: name.includes("High") ? "#dc2626" : 
+             name.includes("Medium") ? "#ea580c" : "#16a34a"
+    }));
+  })() : [];
+
+  // Calculate age distribution
+  const ageDistributionData = agingData ? (() => {
+    const ranges = {
+      "0-30 days": 0,
+      "31-90 days": 0,
+      "91-180 days": 0,
+      "180+ days": 0
+    };
+
+    agingData.forEach(item => {
+      const days = item.days_after_discovery;
+      if (days !== null) {
+        if (days <= 30) {
+          ranges["0-30 days"]++;
+        } else if (days <= 90) {
+          ranges["31-90 days"]++;
+        } else if (days <= 180) {
+          ranges["91-180 days"]++;
+        } else {
+          ranges["180+ days"]++;
+        }
+      }
+    });
+
+    return Object.entries(ranges).map(([name, value]) => ({ name, value }));
+  })() : [];
+
+  if (prioritizationLoading || exploitabilityLoading || agingLoading || mostExploitableLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Prioritization Insights</h1>
+          <p className="text-muted-foreground">Vulnerability prioritization based on severity and exploitability</p>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <p className="text-muted-foreground">Loading prioritization data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -236,7 +431,7 @@ export default function Prioritization() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Exploitability Distribution */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Exploitability Distribution (1.1)</h3>
+          <h3 className="text-lg font-semibold mb-4">Exploitability Distribution</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -278,7 +473,7 @@ export default function Prioritization() {
 
         {/* Vulnerability Age Distribution */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Vulnerability Age Distribution (1.2)</h3>
+          <h3 className="text-lg font-semibold mb-4">Vulnerability Age Distribution</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ageDistributionData}>
@@ -301,7 +496,7 @@ export default function Prioritization() {
 
       {/* Top Hosts by Exploitability Score */}
       <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">Top Hosts by Exploitability Score (1.3)</h3>
+        <h3 className="text-lg font-semibold mb-4">Top Hosts by Exploitability Score</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -313,14 +508,14 @@ export default function Prioritization() {
               </tr>
             </thead>
             <tbody>
-              {topHostsData.map((item, index) => (
+              {mostExploitableData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono">{item.host}</td>
-                  <td className="py-3 px-4 font-bold">{item.score}</td>
-                  <td className="py-3 px-4">{item.vulns}</td>
+                  <td className="py-3 px-4 font-bold">{item.cumulative_exploitability.toFixed(1)}</td>
+                  <td className="py-3 px-4">{item.total_vulnerabilities}</td>
                   <td className="py-3 px-4">
-                    <Badge variant={item.score >= 9.0 ? "destructive" : "default"}>
-                      {item.score >= 9.0 ? "Critical" : "High"}
+                    <Badge variant={item.cumulative_exploitability >= 9.0 ? "destructive" : "default"}>
+                      {item.cumulative_exploitability >= 9.0 ? "Critical" : "High"}
                     </Badge>
                   </td>
                 </tr>

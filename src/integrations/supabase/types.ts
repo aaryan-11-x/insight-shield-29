@@ -204,6 +204,63 @@ export type Database = {
         }
         Relationships: []
       }
+      exploitability_scoring: {
+        Row: {
+          cve: string
+          cvss_category: string | null
+          cvss_v3_base_score: number | null
+          description: string | null
+          epss_category: string | null
+          epss_score: number | null
+          exploitability_score: number | null
+          host: string
+          id: number
+          kev_listed: boolean | null
+          name: string | null
+          plugin_id: number
+          plugin_output: string | null
+          risk: string | null
+          vpr_category: string | null
+          vpr_score: number | null
+        }
+        Insert: {
+          cve: string
+          cvss_category?: string | null
+          cvss_v3_base_score?: number | null
+          description?: string | null
+          epss_category?: string | null
+          epss_score?: number | null
+          exploitability_score?: number | null
+          host: string
+          id?: number
+          kev_listed?: boolean | null
+          name?: string | null
+          plugin_id: number
+          plugin_output?: string | null
+          risk?: string | null
+          vpr_category?: string | null
+          vpr_score?: number | null
+        }
+        Update: {
+          cve?: string
+          cvss_category?: string | null
+          cvss_v3_base_score?: number | null
+          description?: string | null
+          epss_category?: string | null
+          epss_score?: number | null
+          exploitability_score?: number | null
+          host?: string
+          id?: number
+          kev_listed?: boolean | null
+          name?: string | null
+          plugin_id?: number
+          plugin_output?: string | null
+          risk?: string | null
+          vpr_category?: string | null
+          vpr_score?: number | null
+        }
+        Relationships: []
+      }
       host_summary: {
         Row: {
           critical: number
@@ -360,6 +417,30 @@ export type Database = {
         }
         Relationships: []
       }
+      patch_availability: {
+        Row: {
+          id: number
+          risk_severity: string
+          total_patches_to_be_applied: number
+          vulnerabilities_with_patch_available: number
+          vulnerabilities_with_patch_not_available: number
+        }
+        Insert: {
+          id?: number
+          risk_severity: string
+          total_patches_to_be_applied: number
+          vulnerabilities_with_patch_available: number
+          vulnerabilities_with_patch_not_available: number
+        }
+        Update: {
+          id?: number
+          risk_severity?: string
+          total_patches_to_be_applied?: number
+          vulnerabilities_with_patch_available?: number
+          vulnerabilities_with_patch_not_available?: number
+        }
+        Relationships: []
+      }
       patch_details: {
         Row: {
           cve: string
@@ -384,6 +465,54 @@ export type Database = {
           source?: string | null
           tags?: string | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      prioritization_insights: {
+        Row: {
+          critical_count: number
+          high_count: number
+          id: number
+          low_count: number
+          medium_count: number
+          metric: string
+        }
+        Insert: {
+          critical_count: number
+          high_count: number
+          id?: number
+          low_count: number
+          medium_count: number
+          metric: string
+        }
+        Update: {
+          critical_count?: number
+          high_count?: number
+          id?: number
+          low_count?: number
+          medium_count?: number
+          metric?: string
+        }
+        Relationships: []
+      }
+      remediation_insights: {
+        Row: {
+          id: number
+          observations_impacted: number
+          percentage: number | null
+          remediation: string
+        }
+        Insert: {
+          id?: number
+          observations_impacted: number
+          percentage?: number | null
+          remediation: string
+        }
+        Update: {
+          id?: number
+          observations_impacted?: number
+          percentage?: number | null
+          remediation?: string
         }
         Relationships: []
       }

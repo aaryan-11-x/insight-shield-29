@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface PatchDetailData {
   id: number;
@@ -14,8 +15,16 @@ interface PatchDetailData {
   tags: string | null;
 }
 
+interface PatchAvailabilityData {
+  id: number;
+  risk_severity: string;
+  vulnerabilities_with_patch_available: number;
+  vulnerabilities_with_patch_not_available: number;
+  total_patches_to_be_applied: number;
+}
+
 export default function PatchDetails() {
-  const { data: patchDetailsData, isLoading } = useQuery({
+  const { data: patchDetailsData, isLoading: detailsLoading } = useQuery({
     queryKey: ['patch-details'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -32,7 +41,31 @@ export default function PatchDetails() {
     }
   });
 
-  if (isLoading) {
+  const { data: patchAvailabilityData, isLoading: availabilityLoading } = useQuery({
+    queryKey: ['patch-availability'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('patch_availability')
+        .select('*')
+        .order('risk_severity');
+      
+      if (error) {
+        console.error('Error fetching patch availability data:', error);
+        throw error;
+      }
+      
+      return data as PatchAvailabilityData[];
+    }
+  });
+
+  // Transform patch availability data for chart
+  const chartData = patchAvailabilityData?.map(item => ({
+    severity: item.risk_severity,
+    available: item.vulnerabilities_with_patch_available,
+    unavailable: item.vulnerabilities_with_patch_not_available
+  })) || [];
+
+  if (detailsLoading || availabilityLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -40,7 +73,7 @@ export default function PatchDetails() {
           <p className="text-muted-foreground">Detailed information about available patches</p>
         </div>
         <div className="flex items-center justify-center py-8">
-          <p className="text-muted-foreground">Loading patch details data...</p>
+          <p className="text-muted-foreground">Loading patch data...</p>
         </div>
       </div>
     );
@@ -53,7 +86,31 @@ export default function PatchDetails() {
         <p className="text-muted-foreground">Detailed information about available patches</p>
       </div>
 
+      {/* Patch Availability by Severity */}
       <div className="chart-container">
+        <h3 className="text-lg font-semibold mb-4">Patch Availability by Severity</h3>
+        <div className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis dataKey="severity" stroke="#9ca3af" />
+              <YAxis stroke="#9ca3af" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: "#1f2937", 
+                  border: "1px solid #374151",
+                  borderRadius: "8px"
+                }} 
+              />
+              <Bar dataKey="available" fill="#10b981" name="Patches Available" />
+              <Bar dataKey="unavailable" fill="#ef4444" name="Patches Unavailable" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="chart-container">
+        <h3 className="text-lg font-semibold mb-4">Patch Details</h3>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
