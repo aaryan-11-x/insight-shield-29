@@ -587,6 +587,24 @@ export type Database = {
           },
         ]
       }
+      unique_assets: {
+        Row: {
+          asset_count: number
+          assets_type: string
+          id: number
+        }
+        Insert: {
+          asset_count: number
+          assets_type: string
+          id?: number
+        }
+        Update: {
+          asset_count?: number
+          assets_type?: string
+          id?: number
+        }
+        Relationships: []
+      }
       unique_vulnerabilities: {
         Row: {
           affected_hosts: number

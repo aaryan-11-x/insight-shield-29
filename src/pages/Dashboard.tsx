@@ -1,68 +1,158 @@
+
 import { MetricCard } from "@/components/MetricCard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-
-const assetData = [
-  { name: "Vulnerable Assets", value: 359, color: "#dc2626" },
-  { name: "Unaffected Assets", value: 71, color: "#16a34a" },
-];
-
-const severityData = [
-  { name: "Critical", value: 800, color: "#dc2626" },
-  { name: "High", value: 540, color: "#ea580c" },
-  { name: "Medium", value: 360, color: "#ca8a04" },
-  { name: "Low", value: 180, color: "#16a34a" },
-];
-
-const vulnerabilityCategoriesData = [
-  { name: "Microsoft", value: 25, color: "#3b82f6" },
-  { name: "SSL/TLS_Certificate", value: 20, color: "#8b5cf6" },
-  { name: "Database", value: 15, color: "#10b981" },
-  { name: "Apache", value: 12, color: "#f59e0b" },
-  { name: "Config", value: 10, color: "#ef4444" },
-  { name: "Microsoft_NET", value: 8, color: "#06b6d4" },
-  { name: "Oracle", value: 6, color: "#84cc16" },
-  { name: "Miscellaneous", value: 4, color: "#6b7280" },
-];
-
-const vulnerabilityAgeData = [
-  { ageRange: "0-30 days", count: 0 },
-  { ageRange: "31-90 days", count: 1 },
-  { ageRange: "91-180 days", count: 2146 },
-  { ageRange: "181-365 days", count: 1691 },
-  { ageRange: "Over 1 year", count: 989 },
-];
-
-const topCVEsData = [
-  { cve: "CVE-2016-2183", count: 285 },
-  { cve: "CVE-2020-9488", count: 47 },
-  { cve: "CVE-2024-49069", count: 47 },
-  { cve: "CVE-2024-49065", count: 47 },
-  { cve: "CVE-2024-49059", count: 47 },
-  { cve: "CVE-2019-17571", count: 47 },
-  { cve: "CVE-2024-43600", count: 47 },
-  { cve: "CVE-2022-23302", count: 47 },
-  { cve: "CVE-2022-23307", count: 47 },
-  { cve: "CVE-2023-26464", count: 47 },
-];
-
-const topVulnerableHostsData = [
-  { host: "10.168.50.77", critical: 161, high: 46, medium: 10, low: 39 },
-  { host: "10.168.50.140", critical: 83, high: 65, medium: 31, low: 52 },
-  { host: "10.168.9.33", critical: 5, high: 16, medium: 31, low: 158 },
-  { host: "10.168.51.82", critical: 97, high: 10, medium: 24, low: 58 },
-  { host: "10.168.1.235", critical: 67, high: 46, medium: 15, low: 34 },
-  { host: "10.168.9.6", critical: 0, high: 67, medium: 17, low: 61 },
-  { host: "10.168.1.184", critical: 56, high: 33, medium: 9, low: 44 },
-  { host: "10.168.1.130", critical: 56, high: 34, medium: 8, low: 36 },
-  { host: "10.168.1.131", critical: 56, high: 34, medium: 8, low: 36 },
-  { host: "10.168.2.131", critical: 56, high: 33, medium: 8, low: 37 },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
+  // Fetch CVE summary data
+  const { data: cveData } = useQuery({
+    queryKey: ['cve-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cve_summary')
+        .select('cve, count')
+        .order('count', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch host summary data
+  const { data: hostData } = useQuery({
+    queryKey: ['host-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('host_summary')
+        .select('*')
+        .order('vulnerability_count', { ascending: false })
+        .order('vulnerabilities_with_cve', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch vulnerability clustering data
+  const { data: clusteringData } = useQuery({
+    queryKey: ['vulnerability-clustering'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vulnerability_clustering')
+        .select('product_service, total_vulnerabilities')
+        .order('total_vulnerabilities', { ascending: false })
+        .limit(8);
+      
+      if (error) throw error;
+      return data?.map((item, index) => ({
+        name: item.product_service,
+        value: item.total_vulnerabilities,
+        color: ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4", "#84cc16", "#6b7280"][index]
+      }));
+    }
+  });
+
+  // Fetch aging data
+  const { data: agingData } = useQuery({
+    queryKey: ['aging-data'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ageing_of_vulnerability')
+        .select('days_after_discovery');
+      
+      if (error) throw error;
+      
+      const ranges = {
+        "0-30 days": 0,
+        "31-90 days": 0,
+        "91-180 days": 0,
+        "181-365 days": 0,
+        "Over 1 year": 0,
+      };
+
+      data.forEach(vuln => {
+        const days = vuln.days_after_discovery;
+        if (days === null) return;
+        if (days <= 30) ranges["0-30 days"]++;
+        else if (days <= 90) ranges["31-90 days"]++;
+        else if (days <= 180) ranges["91-180 days"]++;
+        else if (days <= 365) ranges["181-365 days"]++;
+        else ranges["Over 1 year"]++;
+      });
+
+      return Object.entries(ranges).map(([ageRange, count]) => ({
+        ageRange,
+        count
+      }));
+    }
+  });
+
+  // Fetch unique assets data
+  const { data: assetsData } = useQuery({
+    queryKey: ['unique-assets'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('unique_assets')
+        .select('*');
+      
+      if (error) throw error;
+      
+      return data?.map(item => ({
+        name: item.assets_type,
+        value: item.asset_count,
+        color: item.assets_type.includes("Vulnerable") ? "#dc2626" : "#16a34a"
+      }));
+    }
+  });
+
+  // Fetch risk summary data
+  const { data: riskData } = useQuery({
+    queryKey: ['risk-summary'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('risk_summary')
+        .select('*')
+        .order('count', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch summary statistics
+  const { data: stats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const [
+        { data: totalVulns },
+        { data: exploitabilityData },
+        { data: kevData },
+        { data: eolData },
+        { data: remediationData }
+      ] = await Promise.all([
+        supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }),
+        supabase.from('exploitability_scoring').select('exploitability_score').gt('exploitability_score', 7),
+        supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true),
+        supabase.from('eol_components').select('name', { count: 'exact' }),
+        supabase.from('remediation_insights').select('observations_impacted')
+      ]);
+
+      return {
+        totalVulnerabilities: totalVulns?.length || 0,
+        highExploitability: exploitabilityData?.length || 0,
+        kevListed: kevData?.length || 0,
+        eolComponents: eolData?.length || 0,
+        totalRemediations: remediationData?.reduce((sum, item) => sum + item.observations_impacted, 0) || 0
+      };
+    }
+  });
+
   const handleDownloadReport = () => {
-    // In a real application, this would generate and download a report
     console.log("Downloading dashboard report...");
   };
 
@@ -83,28 +173,28 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <MetricCard
           title="Total Vulnerabilities"
-          value={20730}
+          value={stats?.totalVulnerabilities || 0}
           color="default"
         />
         <MetricCard
           title="High Exploitability (>7)"
-          value={9452}
+          value={stats?.highExploitability || 0}
           color="critical"
           trend="up"
         />
         <MetricCard
           title="KEV-Listed Vulns"
-          value={1087}
+          value={stats?.kevListed || 0}
           color="warning"
         />
         <MetricCard
           title="EOL Components"
-          value={3210}
+          value={stats?.eolComponents || 0}
           color="warning"
         />
         <MetricCard
-          title="Open Remediations"
-          value={6738}
+          title="Total Remediations"
+          value={stats?.totalRemediations || 0}
           color="success"
           trend="down"
         />
@@ -117,9 +207,9 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold mb-4">Vulnerability Risk Levels</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={severityData}>
+              <BarChart data={riskData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="name" stroke="#9ca3af" />
+                <XAxis dataKey="severity" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
                 <Tooltip 
                   contentStyle={{ 
@@ -128,7 +218,7 @@ export default function Dashboard() {
                     borderRadius: "8px"
                   }} 
                 />
-                <Bar dataKey="value" fill="#3b82f6" />
+                <Bar dataKey="count" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -141,7 +231,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={assetData}
+                  data={assetsData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -149,7 +239,7 @@ export default function Dashboard() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {assetData.map((entry, index) => (
+                  {assetsData?.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -164,7 +254,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
           <div className="flex justify-center gap-4 mt-4">
-            {assetData.map((item, index) => (
+            {assetsData?.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded-full" 
@@ -183,7 +273,7 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={vulnerabilityCategoriesData}
+                  data={clusteringData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -191,7 +281,7 @@ export default function Dashboard() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {vulnerabilityCategoriesData.map((entry, index) => (
+                  {clusteringData?.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -206,7 +296,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4">
-            {vulnerabilityCategoriesData.map((item, index) => (
+            {clusteringData?.map((item, index) => (
               <div key={index} className="flex items-center gap-2 text-xs">
                 <div 
                   className="w-3 h-3 rounded-full" 
@@ -223,7 +313,7 @@ export default function Dashboard() {
           <h3 className="text-lg font-semibold mb-4">Vulnerability Age Distribution</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={vulnerabilityAgeData}>
+              <BarChart data={agingData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="ageRange" stroke="#9ca3af" angle={-45} textAnchor="end" height={80} />
                 <YAxis stroke="#9ca3af" />
@@ -255,7 +345,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {topCVEsData.map((item, index) => (
+                {cveData?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="py-3 px-4">
                       <code className="text-sm font-mono bg-background px-2 py-1 rounded">{item.cve}</code>
@@ -283,7 +373,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {topVulnerableHostsData.map((item, index) => (
+                {hostData?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="py-3 px-4">
                       <code className="text-sm font-mono">{item.host}</code>
