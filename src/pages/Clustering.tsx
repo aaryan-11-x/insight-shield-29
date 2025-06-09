@@ -1,37 +1,40 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
-interface VulnerabilityClusteringData {
+interface ClusteringData {
+  affected_hosts: number;
+  common_vulnerabilities: string | null;
+  critical: number;
+  cve_count: number;
+  high: number;
+  kev_count: number;
+  low: number;
+  medium: number;
   product_service: string;
   total_vulnerabilities: number;
-  critical: number;
-  high: number;
-  medium: number;
-  low: number;
-  affected_hosts: number;
-  cve_count: number;
-  kev_count: number;
-  common_vulnerabilities: string | null;
+  instance_id: UUID;
 }
 
 export default function Clustering() {
   const { data: clusteringData, isLoading } = useQuery({
-    queryKey: ['vulnerability-clustering'],
+    queryKey: ['clustering'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('vulnerability_clustering')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('total_vulnerabilities', { ascending: false });
       
       if (error) {
-        console.error('Error fetching vulnerability clustering data:', error);
+        console.error('Error fetching clustering data:', error);
         throw error;
       }
       
-      return data as VulnerabilityClusteringData[];
+      return data;
     }
   });
 

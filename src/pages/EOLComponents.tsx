@@ -1,4 +1,3 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,13 +5,16 @@ import { Download } from "lucide-react";
 import { SimpleMetricCard } from "@/components/SimpleMetricCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
-interface EOLComponent {
-  plugin_id: number;
-  name: string;
-  risk: string;
-  eol_duration_days: number | null;
+interface EOLComponentData {
+  created_at: string;
   cve: string | null;
+  eol_duration_days: number | null;
+  name: string;
+  plugin_id: number;
+  risk: string;
+  instance_id: UUID;
 }
 
 interface EOLSummary {
@@ -23,19 +25,22 @@ interface EOLSummary {
 }
 
 export default function EOLComponents() {
-  const { data: eolComponents, isLoading: componentsLoading } = useQuery({
+  const { data: eolData, isLoading } = useQuery({
     queryKey: ['eol-components'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('eol_components')
-        .select('*');
+        .select('*')
+        .eq('instance_id', instanceId)
+        .order('eol_duration_days', { ascending: false });
       
       if (error) {
-        console.error('Error fetching EOL components:', error);
+        console.error('Error fetching EOL components data:', error);
         throw error;
       }
       
-      return data as EOLComponent[];
+      return data;
     }
   });
 
@@ -64,18 +69,18 @@ export default function EOLComponents() {
   };
 
   // Prepare chart data
-  const chartData = eolComponents?.map(item => ({
+  const chartData = eolData?.map(item => ({
     name: item.name.replace(" SEoL", ""),
     risk: item.risk,
     riskValue: riskValueMap[item.risk] ?? 0
   })) || [];
 
   // Count components with unknown duration
-  const unknownDurationCount = eolComponents?.filter(item => 
+  const unknownDurationCount = eolData?.filter(item => 
     item.eol_duration_days === null || item.eol_duration_days === undefined
   ).length || 0;
 
-  if (componentsLoading || summaryLoading) {
+  if (isLoading || summaryLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -125,7 +130,7 @@ export default function EOLComponents() {
                 </tr>
               </thead>
               <tbody>
-                {eolComponents?.map((item, index) => (
+                {eolData?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-4 font-mono text-sm">{item.plugin_id}</td>
                     <td className="py-3 px-4 text-sm">{item.name}</td>
@@ -211,7 +216,7 @@ export default function EOLComponents() {
         />
         <SimpleMetricCard
           title="Total"
-          value={`${eolComponents?.length || 0} Components`}
+          value={`${eolData?.length || 0} Components`}
           color="green"
         />
       </div>

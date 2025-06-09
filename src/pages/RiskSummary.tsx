@@ -1,4 +1,3 @@
-
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RiskSummaryData {
-  severity: string;
   count: number;
+  created_at: string;
+  severity: string;
   vulnerabilities_with_cve: number;
+  instance_id: string;
 }
 
 interface CVEData {
@@ -36,16 +37,19 @@ export default function RiskSummary() {
   const { data: riskData, isLoading: riskLoading } = useQuery({
     queryKey: ['risk-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('risk_summary')
-        .select('*');
+        .select('*')
+        .eq('instance_id', instanceId)
+        .order('created_at', { ascending: false });
       
       if (error) {
-        console.error('Error fetching risk data:', error);
+        console.error('Error fetching risk summary data:', error);
         throw error;
       }
       
-      return data as RiskSummaryData[];
+      return data;
     }
   });
 

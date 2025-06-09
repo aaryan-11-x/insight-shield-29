@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface PrioritizationInsightData {
   id: number;
@@ -12,6 +13,7 @@ interface PrioritizationInsightData {
   high_count: number;
   medium_count: number;
   low_count: number;
+  instance_id: UUID;
 }
 
 interface ExploitabilityScoringData {
@@ -101,19 +103,21 @@ const kevLegend = [
 
 export default function Prioritization() {
   const { data: prioritizationData, isLoading: prioritizationLoading } = useQuery({
-    queryKey: ['prioritization-insights'],
+    queryKey: ['prioritization'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('prioritization_insights')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('id');
       
       if (error) {
-        console.error('Error fetching prioritization insights data:', error);
+        console.error('Error fetching prioritization data:', error);
         throw error;
       }
       
-      return data as PrioritizationInsightData[];
+      return data;
     }
   });
 

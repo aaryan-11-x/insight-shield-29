@@ -1,4 +1,3 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -12,19 +11,22 @@ interface IPInsightsData {
   high: number;
   medium: number;
   low: number;
-  kev_count: number;
   exploitability_score: number;
-  most_common_category: string | null;
+  kev_count: number;
   last_scan_date: string | null;
+  most_common_category: string | null;
+  instance_id: string;
 }
 
 export default function IPInsights() {
-  const { data: ipInsightsData, isLoading } = useQuery({
+  const { data: ipData, isLoading } = useQuery({
     queryKey: ['ip-insights'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('ip_insights')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('total_vulnerabilities', { ascending: false });
       
       if (error) {
@@ -32,18 +34,18 @@ export default function IPInsights() {
         throw error;
       }
       
-      return data as IPInsightsData[];
+      return data;
     }
   });
 
   // Calculate statistics from the data
-  const stats = ipInsightsData ? {
-    totalHosts: ipInsightsData.length,
-    totalVulnerabilities: ipInsightsData.reduce((sum, host) => sum + host.total_vulnerabilities, 0),
-    hostsWithVulnerabilities: ipInsightsData.filter(host => host.total_vulnerabilities > 0).length,
-    hostsWithCritical: ipInsightsData.filter(host => host.critical > 0).length,
-    hostsWithHigh: ipInsightsData.filter(host => host.high > 0).length,
-    top5Hosts: ipInsightsData.slice(0, 5).map(host => host.ip_address).join(', ')
+  const stats = ipData ? {
+    totalHosts: ipData.length,
+    totalVulnerabilities: ipData.reduce((sum, host) => sum + host.total_vulnerabilities, 0),
+    hostsWithVulnerabilities: ipData.filter(host => host.total_vulnerabilities > 0).length,
+    hostsWithCritical: ipData.filter(host => host.critical > 0).length,
+    hostsWithHigh: ipData.filter(host => host.high > 0).length,
+    top5Hosts: ipData.slice(0, 5).map(host => host.ip_address).join(', ')
   } : {
     totalHosts: 0,
     totalVulnerabilities: 0,
@@ -53,11 +55,11 @@ export default function IPInsights() {
     top5Hosts: ''
   };
 
-  const vulnerabilityDistributionData = ipInsightsData ? [
-    { name: "Critical", value: ipInsightsData.reduce((sum, host) => sum + host.critical, 0), color: "#dc2626" },
-    { name: "High", value: ipInsightsData.reduce((sum, host) => sum + host.high, 0), color: "#ea580c" },
-    { name: "Medium", value: ipInsightsData.reduce((sum, host) => sum + host.medium, 0), color: "#ca8a04" },
-    { name: "Low", value: ipInsightsData.reduce((sum, host) => sum + host.low, 0), color: "#16a34a" },
+  const vulnerabilityDistributionData = ipData ? [
+    { name: "Critical", value: ipData.reduce((sum, host) => sum + host.critical, 0), color: "#dc2626" },
+    { name: "High", value: ipData.reduce((sum, host) => sum + host.high, 0), color: "#ea580c" },
+    { name: "Medium", value: ipData.reduce((sum, host) => sum + host.medium, 0), color: "#ca8a04" },
+    { name: "Low", value: ipData.reduce((sum, host) => sum + host.low, 0), color: "#16a34a" },
   ] : [];
 
   if (isLoading) {
@@ -168,7 +170,7 @@ export default function IPInsights() {
           <h3 className="text-lg font-semibold mb-4">Top Hosts by Vulnerability Count</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ipInsightsData?.slice(0, 7)}>
+              <BarChart data={ipData?.slice(0, 7)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="ip_address" stroke="#9ca3af" fontSize={10} angle={-45} textAnchor="end" height={80} />
                 <YAxis stroke="#9ca3af" />
@@ -201,7 +203,7 @@ export default function IPInsights() {
               </tr>
             </thead>
             <tbody>
-              {ipInsightsData?.map((item, index) => (
+              {ipData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                   <td className="py-3 px-2 font-mono text-xs">{item.ip_address}</td>
                   <td className="py-3 px-2">{item.hostname || "—"}</td>

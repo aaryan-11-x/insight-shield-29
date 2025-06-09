@@ -1,30 +1,33 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
-interface RemediationInsightData {
+interface RemediationData {
   id: number;
-  remediation: string;
   observations_impacted: number;
   percentage: number | null;
+  remediation: string;
+  instance_id: UUID;
 }
 
 export default function Remediation() {
   const { data: remediationData, isLoading } = useQuery({
-    queryKey: ['remediation-insights'],
+    queryKey: ['remediation'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('remediation_insights')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('observations_impacted', { ascending: false });
       
       if (error) {
-        console.error('Error fetching remediation insights data:', error);
+        console.error('Error fetching remediation data:', error);
         throw error;
       }
       
-      return data as RemediationInsightData[];
+      return data;
     }
   });
 

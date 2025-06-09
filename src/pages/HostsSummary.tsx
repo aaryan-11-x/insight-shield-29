@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -6,37 +5,40 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface HostData {
   host: string;
-  vulnerability_count: number;
-  vulnerabilities_with_cve: number;
   critical: number;
   high: number;
   medium: number;
   low: number;
+  vulnerabilities_with_cve: number;
+  vulnerability_count: number;
+  instance_id: string;
 }
 
 export default function HostsSummary() {
-  const { data: hostsData, isLoading, error } = useQuery({
+  const { data: hostData, isLoading, error } = useQuery({
     queryKey: ['host-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('host_summary')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('vulnerability_count', { ascending: false });
       
       if (error) {
-        console.error('Error fetching host data:', error);
+        console.error('Error fetching host summary data:', error);
         throw error;
       }
       
-      return data as HostData[];
+      return data;
     }
   });
 
   // Calculate summary statistics from the fetched data
   const summaryStats = {
-    totalHosts: hostsData?.length || 0,
-    totalVulnerabilities: hostsData?.reduce((sum, host) => sum + host.vulnerability_count, 0) || 0,
-    totalVulnerabilitiesWithCVE: hostsData?.reduce((sum, host) => sum + host.vulnerabilities_with_cve, 0) || 0
+    totalHosts: hostData?.length || 0,
+    totalVulnerabilities: hostData?.reduce((sum, host) => sum + host.vulnerability_count, 0) || 0,
+    totalVulnerabilitiesWithCVE: hostData?.reduce((sum, host) => sum + host.vulnerabilities_with_cve, 0) || 0
   };
 
   if (isLoading) {
@@ -131,7 +133,7 @@ export default function HostsSummary() {
               </tr>
             </thead>
             <tbody>
-              {hostsData?.map((item, index) => (
+              {hostData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono text-sm">{item.host}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.vulnerability_count}</td>
@@ -147,7 +149,7 @@ export default function HostsSummary() {
         </div>
       </div>
 
-      {hostsData?.length === 0 && (
+      {hostData?.length === 0 && (
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">No host data found.</p>
         </div>

@@ -1,38 +1,41 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { SimpleMetricCard } from "@/components/SimpleMetricCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface EOLVersionData {
+  instance_count: number;
   software_type: string;
   version: string;
-  instance_count: number;
+  instance_id: UUID;
 }
 
 export default function EOLVersions() {
-  const { data: eolVersions, isLoading } = useQuery({
+  const { data: eolVersionData, isLoading } = useQuery({
     queryKey: ['eol-versions'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('eol_versions')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('instance_count', { ascending: false });
       
       if (error) {
-        console.error('Error fetching EOL versions:', error);
+        console.error('Error fetching EOL versions data:', error);
         throw error;
       }
       
-      return data as EOLVersionData[];
+      return data;
     }
   });
 
   // Calculate statistics
-  const stats = eolVersions ? {
-    totalSEoLComponents: eolVersions.reduce((sum, version) => sum + version.instance_count, 0),
-    totalDifferentSoftwareTypes: new Set(eolVersions.map(v => v.software_type)).size,
-    totalDifferentVersions: eolVersions.length
+  const stats = eolVersionData ? {
+    totalSEoLComponents: eolVersionData.reduce((sum, version) => sum + version.instance_count, 0),
+    totalDifferentSoftwareTypes: new Set(eolVersionData.map(v => v.software_type)).size,
+    totalDifferentVersions: eolVersionData.length
   } : {
     totalSEoLComponents: 0,
     totalDifferentSoftwareTypes: 0,
@@ -40,9 +43,9 @@ export default function EOLVersions() {
   };
 
   // Create software distribution data
-  const softwareDistribution = eolVersions ? 
-    Array.from(new Set(eolVersions.map(v => v.software_type))).map(softwareType => {
-      const versions = eolVersions.filter(v => v.software_type === softwareType);
+  const softwareDistribution = eolVersionData ? 
+    Array.from(new Set(eolVersionData.map(v => v.software_type))).map(softwareType => {
+      const versions = eolVersionData.filter(v => v.software_type === softwareType);
       return {
         softwareType,
         totalInstances: versions.reduce((sum, v) => sum + v.instance_count, 0),
@@ -166,7 +169,7 @@ export default function EOLVersions() {
               </tr>
             </thead>
             <tbody>
-              {eolVersions?.map((item, index) => (
+              {eolVersionData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 text-sm">{item.software_type}</td>
                   <td className="py-3 px-4 text-center font-mono text-sm">{item.version}</td>

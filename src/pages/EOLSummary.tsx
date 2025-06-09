@@ -1,7 +1,7 @@
-
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface EOLSummaryData {
   total_unique_components: number;
@@ -22,23 +22,29 @@ interface EOLSummaryData {
   dotnet_core_sdk_count: number;
   microsoft_silverlight_count: number;
   total_count: number;
+  created_at: string;
+  id: number;
+  instance_id: UUID;
 }
 
 export default function EOLSummary() {
   const { data: eolSummaryData, isLoading, error } = useQuery({
     queryKey: ['eol-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('eol_summary')
         .select('*')
-        .single();
+        .eq('instance_id', instanceId)
+        .order('created_at', { ascending: false })
+        .limit(1);
       
       if (error) {
-        console.error('Error fetching EOL summary:', error);
+        console.error('Error fetching EOL summary data:', error);
         throw error;
       }
       
-      return data as EOLSummaryData;
+      return data?.[0];
     }
   });
 

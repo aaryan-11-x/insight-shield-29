@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,18 +6,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function CreateInstance() {
   const [instanceName, setInstanceName] = useState("");
   const [description, setDescription] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (instanceName.trim()) {
-      // Store instance data (in a real app, this would be sent to a backend)
-      console.log("Creating instance:", { instanceName, description });
-      navigate("/upload-vulnerabilities");
+      try {
+        // Generate a random instance ID
+        const instanceId = uuidv4() as `${string}-${string}-${string}-${string}-${string}`;
+        
+        // Store in Supabase
+        const { data, error } = await supabase
+          .from('instances')
+          .insert([
+            {
+              name: instanceName,
+              description: description,
+              status: 'active',
+              instance_id: instanceId
+            }
+          ])
+          .select();
+
+        if (error) throw error;
+
+        // Store the instance ID in localStorage
+        if (data && data[0]) {
+          localStorage.setItem('currentInstanceId', data[0].instance_id);
+        }
+        
+        navigate("/upload-vulnerabilities");
+      } catch (error) {
+        console.error('Error creating instance:', error);
+        // You might want to show an error message to the user here
+      }
     }
   };
 

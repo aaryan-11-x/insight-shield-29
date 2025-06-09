@@ -1,11 +1,12 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface CVEData {
+  instance_id: UUID;
   cve: string;
   count: number | null;
   severity: string | null;
@@ -19,16 +20,19 @@ export default function CVESummary() {
   const { data: cveData, isLoading, error } = useQuery({
     queryKey: ['cve-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('cve_summary')
-        .select('*');
+        .select('*')
+        .eq('instance_id', instanceId)
+        .order('count', { ascending: false });
       
       if (error) {
-        console.error('Error fetching CVE data:', error);
+        console.error('Error fetching CVE summary data:', error);
         throw error;
       }
       
-      return data as CVEData[];
+      return data;
     }
   });
 

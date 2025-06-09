@@ -1,3 +1,5 @@
+import { UUID } from "crypto"
+
 export type Json =
   | string
   | number
@@ -293,31 +295,28 @@ export type Database = {
       }
       instances: {
         Row: {
-          created_at: string
-          description: string | null
           id: number
+          instance_id: UUID
           name: string
+          description: string | null
           status: string
-          updated_at: string
-          user_id: string
+          created_at: string
         }
         Insert: {
-          created_at?: string
-          description?: string | null
           id?: number
+          instance_id: UUID
+          description?: string | null
           name: string
           status?: string
-          updated_at?: string
-          user_id: string
+          created_at?: string
         }
         Update: {
-          created_at?: string
-          description?: string | null
           id?: number
-          name?: string
+          instance_id: UUID
+          description?: string | null
+          name: string
           status?: string
-          updated_at?: string
-          user_id?: string
+          created_at?: string
         }
         Relationships: []
       }

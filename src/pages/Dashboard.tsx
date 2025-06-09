@@ -1,4 +1,3 @@
-
 import { MetricCard } from "@/components/MetricCard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
@@ -128,6 +127,7 @@ export default function Dashboard() {
   const { data: stats } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const [
         { data: totalVulns },
         { data: exploitabilityData },
@@ -135,11 +135,11 @@ export default function Dashboard() {
         { data: eolData },
         { data: remediationData }
       ] = await Promise.all([
-        supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }),
-        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 7),
-        supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true),
-        supabase.from('eol_components').select('name', { count: 'exact' }),
-        supabase.from('remediation_insights').select('id', { count: 'exact' })
+        supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }).eq('instance_id', instanceId),
+        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 7).eq('instance_id', instanceId),
+        supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true).eq('instance_id', instanceId),
+        supabase.from('eol_components').select('name', { count: 'exact' }).eq('instance_id', instanceId),
+        supabase.from('remediation_insights').select('id', { count: 'exact' }).eq('instance_id', instanceId)
       ]);
 
       return {

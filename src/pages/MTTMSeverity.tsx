@@ -1,30 +1,33 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
-interface MTTMData {
+interface MTTMSeverityData {
+  average_mttm_days: number;
   id: number;
   risk_severity: string;
   vulnerability_count: number;
-  average_mttm_days: number;
+  instance_id: UUID;
 }
 
 export default function MTTMSeverity() {
   const { data: mttmData, isLoading } = useQuery({
-    queryKey: ['mttm-by-severity'],
+    queryKey: ['mttm-severity'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('mttm_by_severity')
         .select('*')
-        .order('id');
+        .eq('instance_id', instanceId)
+        .order('average_mttm_days', { ascending: false });
       
       if (error) {
-        console.error('Error fetching MTTM by severity data:', error);
+        console.error('Error fetching MTTM severity data:', error);
         throw error;
       }
       
-      return data as MTTMData[];
+      return data;
     }
   });
 

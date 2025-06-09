@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,43 +6,47 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Server, Shield, AlertTriangle, ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const instances = [
-  {
-    id: "prod-env",
-    name: "Production Environment",
-    description: "Main production infrastructure with critical systems",
-    status: "active",
-    vulnerabilities: 1247,
-    riskLevel: "high",
-    lastScan: "2 hours ago"
-  },
-  {
-    id: "staging-env",
-    name: "Staging Environment", 
-    description: "Pre-production testing environment",
-    status: "active",
-    vulnerabilities: 456,
-    riskLevel: "medium",
-    lastScan: "6 hours ago"
-  },
-  {
-    id: "dev-env",
-    name: "Development Environment",
-    description: "Development and testing infrastructure",
-    status: "active",
-    vulnerabilities: 234,
-    riskLevel: "low",
-    lastScan: "12 hours ago"
-  }
-];
+interface Instance {
+  id: number;
+  instance_id: `${string}-${string}-${string}-${string}-${string}`;
+  name: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
 
 export default function SelectInstance() {
   const [selectedInstance, setSelectedInstance] = useState("");
+  const [instances, setInstances] = useState<Instance[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchInstances();
+  }, []);
+
+  const fetchInstances = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('instances')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setInstances(data || []);
+    } catch (error) {
+      console.error('Error fetching instances:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleContinue = () => {
     if (selectedInstance) {
+      // Store the selected instance ID in localStorage
+      localStorage.setItem('currentInstanceId', selectedInstance);
       navigate("/");
     }
   };
@@ -69,6 +73,14 @@ export default function SelectInstance() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <div className="text-center">Loading instances...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
@@ -94,17 +106,17 @@ export default function SelectInstance() {
                 {instances.map((instance) => (
                   <div key={instance.id} className="relative">
                     <RadioGroupItem 
-                      value={instance.id} 
-                      id={instance.id}
+                      value={instance.instance_id} 
+                      id={instance.instance_id}
                       className="peer sr-only"
                     />
                     <Label
-                      htmlFor={instance.id}
+                      htmlFor={instance.instance_id}
                       className="flex cursor-pointer rounded-lg border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                     >
                       <div className="flex items-start gap-4 w-full">
                         <div className="mt-1">
-                          {getRiskIcon(instance.riskLevel)}
+                          {getRiskIcon(instance.status)}
                         </div>
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center justify-between">
@@ -115,11 +127,8 @@ export default function SelectInstance() {
                           </div>
                           <p className="text-sm text-muted-foreground">{instance.description}</p>
                           <div className="flex items-center gap-4 text-sm">
-                            <span className={`font-medium ${getRiskColor(instance.riskLevel)}`}>
-                              {instance.vulnerabilities} vulnerabilities
-                            </span>
                             <span className="text-muted-foreground">
-                              Last scan: {instance.lastScan}
+                              Created: {new Date(instance.created_at).toLocaleDateString()}
                             </span>
                           </div>
                         </div>

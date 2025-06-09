@@ -1,30 +1,34 @@
-
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface RemediationUniqueData {
   id: number;
   remediation: string;
   unique_vulnerability: string;
-  risk_rating: string;
+  observations_impacted: number;
+  percentage: number | null;
+  instance_id: UUID;
 }
 
 export default function RemediationUnique() {
   const { data: remediationUniqueData, isLoading } = useQuery({
-    queryKey: ['remediation-unique-vulnerabilities'],
+    queryKey: ['remediation-unique'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
-        .from('remediation_to_unique_vulnerabilities')
+        .from('remediation_unique_insights')
         .select('*')
-        .order('id');
+        .eq('instance_id', instanceId)
+        .order('observations_impacted', { ascending: false });
       
       if (error) {
-        console.error('Error fetching remediation unique vulnerabilities data:', error);
+        console.error('Error fetching remediation unique data:', error);
         throw error;
       }
       
-      return data as RemediationUniqueData[];
+      return data;
     }
   });
 

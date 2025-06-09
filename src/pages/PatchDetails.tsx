@@ -1,18 +1,19 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { UUID } from "crypto";
 
-interface PatchDetailData {
-  id: number;
+interface PatchDetailsData {
   cve: string;
+  id: number;
   patch_status: string;
   source: string | null;
-  url: string | null;
   tags: string | null;
+  url: string | null;
+  instance_id: UUID;
 }
 
 interface PatchAvailabilityData {
@@ -24,12 +25,14 @@ interface PatchAvailabilityData {
 }
 
 export default function PatchDetails() {
-  const { data: patchDetailsData, isLoading: detailsLoading } = useQuery({
+  const { data: patchData, isLoading } = useQuery({
     queryKey: ['patch-details'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('patch_details')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('id');
       
       if (error) {
@@ -37,7 +40,7 @@ export default function PatchDetails() {
         throw error;
       }
       
-      return data as PatchDetailData[];
+      return data;
     }
   });
 
@@ -65,7 +68,7 @@ export default function PatchDetails() {
     unavailable: item.vulnerabilities_with_patch_not_available
   })) || [];
 
-  if (detailsLoading || availabilityLoading) {
+  if (isLoading || availabilityLoading) {
     return (
       <div className="space-y-6">
         <div>
@@ -123,7 +126,7 @@ export default function PatchDetails() {
               </tr>
             </thead>
             <tbody>
-              {patchDetailsData?.map((item, index) => (
+              {patchData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                   <td className="py-3 px-4">
                     <code className="text-sm font-mono bg-background px-2 py-1 rounded">{item.cve}</code>

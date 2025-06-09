@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useQuery } from "@tanstack/react-query";
@@ -20,9 +19,11 @@ export default function UniqueVulnerabilities() {
   const { data: uniqueVulnerabilities, isLoading } = useQuery({
     queryKey: ['unique-vulnerabilities'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('unique_vulnerabilities')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('instance_count', { ascending: false });
       
       if (error) {

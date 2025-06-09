@@ -1,43 +1,46 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface EOLIPData {
-  ip_address: string;
-  seol_component_count: number;
+  ip_address: unknown;
   risk_level: string;
+  seol_component_count: number;
+  instance_id: UUID;
 }
 
 export default function EOLIPs() {
-  const { data: eolIPs, isLoading } = useQuery({
+  const { data: eolIPData, isLoading } = useQuery({
     queryKey: ['eol-ips'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('eol_ip')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('seol_component_count', { ascending: false });
       
       if (error) {
-        console.error('Error fetching EOL IPs:', error);
+        console.error('Error fetching EOL IP data:', error);
         throw error;
       }
       
-      return data as EOLIPData[];
+      return data;
     }
   });
 
   // Calculate statistics
-  const stats = eolIPs ? {
-    totalIPsWithSEoLComponents: eolIPs.length,
-    averageSEoLComponentsPerIP: eolIPs.length > 0 ? 
-      (eolIPs.reduce((sum, ip) => sum + ip.seol_component_count, 0) / eolIPs.length).toFixed(2) : 0,
-    maximumSEoLComponentsOnSingleIP: eolIPs.length > 0 ? 
-      Math.max(...eolIPs.map(ip => ip.seol_component_count)) : 0,
-    ipsWithOneSEoLComponent: eolIPs.filter(ip => ip.seol_component_count === 1).length,
-    ipsWithTwoToFiveSEoLComponents: eolIPs.filter(ip => ip.seol_component_count >= 2 && ip.seol_component_count <= 5).length,
-    ipsWithMoreThanFiveSEoLComponents: eolIPs.filter(ip => ip.seol_component_count > 5).length
+  const stats = eolIPData ? {
+    totalIPsWithSEoLComponents: eolIPData.length,
+    averageSEoLComponentsPerIP: eolIPData.length > 0 ? 
+      (eolIPData.reduce((sum, ip) => sum + ip.seol_component_count, 0) / eolIPData.length).toFixed(2) : 0,
+    maximumSEoLComponentsOnSingleIP: eolIPData.length > 0 ? 
+      Math.max(...eolIPData.map(ip => ip.seol_component_count)) : 0,
+    ipsWithOneSEoLComponent: eolIPData.filter(ip => ip.seol_component_count === 1).length,
+    ipsWithTwoToFiveSEoLComponents: eolIPData.filter(ip => ip.seol_component_count >= 2 && ip.seol_component_count <= 5).length,
+    ipsWithMoreThanFiveSEoLComponents: eolIPData.filter(ip => ip.seol_component_count > 5).length
   } : {
     totalIPsWithSEoLComponents: 0,
     averageSEoLComponentsPerIP: 0,
@@ -48,7 +51,7 @@ export default function EOLIPs() {
   };
 
   // Get top 10 IPs for chart
-  const topIPsForChart = eolIPs ? eolIPs.slice(0, 10) : [];
+  const topIPsForChart = eolIPData ? eolIPData.slice(0, 10) : [];
 
   if (isLoading) {
     return (
@@ -180,7 +183,7 @@ export default function EOLIPs() {
               </tr>
             </thead>
             <tbody>
-              {eolIPs?.map((item, index) => (
+              {eolIPData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono text-sm">{item.ip_address}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>

@@ -42,7 +42,7 @@ export default function RiskTrajectory() {
       {/* Total Vulnerabilities Over Time */}
       <div className="chart-container">
         <h3 className="text-lg font-semibold mb-4">Total Vulnerabilities Over Time</h3>
-        
+
         {/* Table */}
         <div className="mb-6 overflow-x-auto">
           <table className="w-full">
@@ -70,17 +70,17 @@ export default function RiskTrajectory() {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="timestamp" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "#1f2937", 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
                   border: "1px solid #374151",
                   borderRadius: "8px"
-                }} 
+                }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="totalVulnerabilities" 
-                stroke="#3b82f6" 
+              <Line
+                type="monotone"
+                dataKey="totalVulnerabilities"
+                stroke="#3b82f6"
                 strokeWidth={2}
                 dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
               />
@@ -92,7 +92,7 @@ export default function RiskTrajectory() {
       {/* Vulnerability Trends By Severity Over Time */}
       <div className="chart-container">
         <h3 className="text-lg font-semibold mb-4">Vulnerability Trends By Severity Over Time</h3>
-        
+
         {/* Table */}
         <div className="mb-6 overflow-x-auto">
           <table className="w-full">
@@ -126,39 +126,39 @@ export default function RiskTrajectory() {
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="timestamp" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: "#1f2937", 
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
                   border: "1px solid #374151",
                   borderRadius: "8px"
-                }} 
+                }}
               />
               <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="critical" 
-                stroke="#dc2626" 
+              <Line
+                type="monotone"
+                dataKey="critical"
+                stroke="#dc2626"
                 strokeWidth={2}
                 dot={{ fill: "#dc2626", strokeWidth: 2, r: 4 }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="high" 
-                stroke="#ea580c" 
+              <Line
+                type="monotone"
+                dataKey="high"
+                stroke="#ea580c"
                 strokeWidth={2}
                 dot={{ fill: "#ea580c", strokeWidth: 2, r: 4 }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="medium" 
-                stroke="#ca8a04" 
+              <Line
+                type="monotone"
+                dataKey="medium"
+                stroke="#ca8a04"
                 strokeWidth={2}
                 dot={{ fill: "#ca8a04", strokeWidth: 2, r: 4 }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="low" 
-                stroke="#16a34a" 
+              <Line
+                type="monotone"
+                dataKey="low"
+                stroke="#16a34a"
                 strokeWidth={2}
                 dot={{ fill: "#16a34a", strokeWidth: 2, r: 4 }}
               />
