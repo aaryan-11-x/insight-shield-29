@@ -1,5 +1,4 @@
-
-import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut } from "lucide-react";
+import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -167,6 +166,10 @@ export function AppSidebar() {
     // Stay on current page - don't navigate anywhere
   };
 
+  const handleSelectInstance = () => {
+    navigate("/select-instance");
+  };
+
   return (
     <>
       <Sidebar>
@@ -233,7 +236,15 @@ export function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-4">
+        <SidebarFooter className="p-4 space-y-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+            onClick={handleSelectInstance}
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Select Instance</span>
+          </Button>
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"

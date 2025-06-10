@@ -1,7 +1,7 @@
-import { MetricCard } from "@/components/MetricCard";
+import { ClickableMetricCard } from "@/components/ClickableMetricCard";
+import { ClickableChartContainer } from "@/components/ClickableChartContainer";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -163,48 +163,49 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Vulnerability Visualization</h1>
           <p className="text-muted-foreground">Comprehensive security overview and threat assessment</p>
         </div>
-        <Button onClick={handleDownloadReport} className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Download Report
-        </Button>
+        <DownloadDropdown onDownloadExcel={handleDownloadReport} onDownloadPDF={handleDownloadReport} />
       </div>
 
-      {/* Metrics Grid */}
+      {/* Clickable Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-        <MetricCard
+        <ClickableMetricCard
           title="Total Vulnerabilities"
           value={stats?.totalVulnerabilities || 0}
           color="default"
+          href="/dashboard/vulnerability-aging"
         />
-        <MetricCard
+        <ClickableMetricCard
           title="High Exploitability (≥7)"
           value={stats?.highExploitability || 0}
           color="critical"
           trend="up"
+          href="/dashboard/exploitability"
         />
-        <MetricCard
+        <ClickableMetricCard
           title="KEV-Listed Vulns"
           value={stats?.kevListed || 0}
           color="warning"
+          href="/dashboard/exploitability"
         />
-        <MetricCard
+        <ClickableMetricCard
           title="EOL Components"
           value={stats?.eolComponents || 0}
           color="warning"
+          href="/dashboard/eol-components"
         />
-        <MetricCard
+        <ClickableMetricCard
           title="Total Remediations"
           value={stats?.totalRemediations || 0}
           color="success"
           trend="down"
+          href="/dashboard/remediation"
         />
       </div>
 
       {/* Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Vulnerability Risk Levels */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Vulnerability Risk Levels</h3>
+        <ClickableChartContainer title="Vulnerability Risk Levels" href="/dashboard/risk-summary">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={riskData}>
@@ -222,11 +223,10 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </ClickableChartContainer>
 
         {/* Unique Assets */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Unique Assets</h3>
+        <ClickableChartContainer title="Unique Assets">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -264,11 +264,10 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </ClickableChartContainer>
 
         {/* Vulnerability Categories */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Vulnerability Categories</h3>
+        <ClickableChartContainer title="Vulnerability Categories" href="/dashboard/clustering">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -306,11 +305,10 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </div>
+        </ClickableChartContainer>
 
         {/* Vulnerability Age Distribution */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Vulnerability Age Distribution</h3>
+        <ClickableChartContainer title="Vulnerability Age Distribution" href="/dashboard/vulnerability-aging">
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={agingData}>
@@ -328,14 +326,13 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </ClickableChartContainer>
       </div>
 
       {/* Top 10 Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top 10 CVEs */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Top 10 CVEs</h3>
+        <ClickableChartContainer title="Top 10 CVEs" href="/dashboard/cve-summary">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -356,11 +353,10 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </ClickableChartContainer>
 
         {/* Top 10 Vulnerable Hosts */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Top 10 Vulnerable Hosts</h3>
+        <ClickableChartContainer title="Top 10 Vulnerable Hosts" href="/dashboard/hosts-summary">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -387,7 +383,7 @@ export default function Dashboard() {
               </tbody>
             </table>
           </div>
-        </div>
+        </ClickableChartContainer>
       </div>
     </div>
   );

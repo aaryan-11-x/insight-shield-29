@@ -1,5 +1,3 @@
-import { UUID } from "crypto"
-
 export type Json =
   | string
   | number
@@ -18,6 +16,7 @@ export type Database = {
           days_after_discovery: number | null
           host: string
           id: number
+          instance_id: string
           name: string
           plugin_id: number
           risk: string
@@ -28,6 +27,7 @@ export type Database = {
           days_after_discovery?: number | null
           host: string
           id?: number
+          instance_id: string
           name: string
           plugin_id: number
           risk: string
@@ -38,11 +38,20 @@ export type Database = {
           days_after_discovery?: number | null
           host?: string
           id?: number
+          instance_id?: string
           name?: string
           plugin_id?: number
           risk?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ageing_of_vulnerability_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       cve_summary: {
         Row: {
@@ -50,6 +59,7 @@ export type Database = {
           cve: string
           description: string | null
           hosts: string | null
+          instance_id: string
           name: string | null
           severity: string | null
           solutions: string | null
@@ -59,6 +69,7 @@ export type Database = {
           cve: string
           description?: string | null
           hosts?: string | null
+          instance_id: string
           name?: string | null
           severity?: string | null
           solutions?: string | null
@@ -68,17 +79,27 @@ export type Database = {
           cve?: string
           description?: string | null
           hosts?: string | null
+          instance_id?: string
           name?: string | null
           severity?: string | null
           solutions?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cve_summary_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       eol_components: {
         Row: {
           created_at: string
           cve: string | null
           eol_duration_days: number | null
+          instance_id: string
           name: string
           plugin_id: number
           risk: string
@@ -87,6 +108,7 @@ export type Database = {
           created_at?: string
           cve?: string | null
           eol_duration_days?: number | null
+          instance_id: string
           name: string
           plugin_id: number
           risk: string
@@ -95,29 +117,49 @@ export type Database = {
           created_at?: string
           cve?: string | null
           eol_duration_days?: number | null
+          instance_id?: string
           name?: string
           plugin_id?: number
           risk?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eol_components_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       eol_ip: {
         Row: {
+          instance_id: string
           ip_address: unknown
           risk_level: string
           seol_component_count: number
         }
         Insert: {
+          instance_id: string
           ip_address: unknown
           risk_level: string
           seol_component_count: number
         }
         Update: {
+          instance_id?: string
           ip_address?: unknown
           risk_level?: string
           seol_component_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eol_ip_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       eol_summary: {
         Row: {
@@ -131,6 +173,7 @@ export type Database = {
           high_pct: number
           hosts_with_eol_components: number
           id: number
+          instance_id: string
           low_count: number
           low_pct: number
           medium_count: number
@@ -153,6 +196,7 @@ export type Database = {
           high_pct: number
           hosts_with_eol_components: number
           id?: never
+          instance_id: string
           low_count: number
           low_pct: number
           medium_count: number
@@ -175,6 +219,7 @@ export type Database = {
           high_pct?: number
           hosts_with_eol_components?: number
           id?: never
+          instance_id?: string
           low_count?: number
           low_pct?: number
           medium_count?: number
@@ -186,25 +231,44 @@ export type Database = {
           total_unique_components?: number
           unique_eol_versions?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eol_summary_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       eol_versions: {
         Row: {
           instance_count: number
+          instance_id: string
           software_type: string
           version: string
         }
         Insert: {
           instance_count: number
+          instance_id: string
           software_type: string
           version: string
         }
         Update: {
           instance_count?: number
+          instance_id?: string
           software_type?: string
           version?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "eol_versions_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       exploitability_scoring: {
         Row: {
@@ -217,6 +281,7 @@ export type Database = {
           exploitability_score: number | null
           host: string
           id: number
+          instance_id: string
           kev_listed: boolean | null
           name: string | null
           plugin_id: number
@@ -235,6 +300,7 @@ export type Database = {
           exploitability_score?: number | null
           host: string
           id?: number
+          instance_id: string
           kev_listed?: boolean | null
           name?: string | null
           plugin_id: number
@@ -253,6 +319,7 @@ export type Database = {
           exploitability_score?: number | null
           host?: string
           id?: number
+          instance_id?: string
           kev_listed?: boolean | null
           name?: string | null
           plugin_id?: number
@@ -261,13 +328,22 @@ export type Database = {
           vpr_category?: string | null
           vpr_score?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "exploitability_scoring_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       host_summary: {
         Row: {
           critical: number
           high: number
           host: string
+          instance_id: string
           low: number
           medium: number
           vulnerabilities_with_cve: number
@@ -277,6 +353,7 @@ export type Database = {
           critical: number
           high: number
           host: string
+          instance_id: string
           low: number
           medium: number
           vulnerabilities_with_cve: number
@@ -286,37 +363,46 @@ export type Database = {
           critical?: number
           high?: number
           host?: string
+          instance_id?: string
           low?: number
           medium?: number
           vulnerabilities_with_cve?: number
           vulnerability_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "host_summary_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       instances: {
         Row: {
-          id: number
-          instance_id: UUID
-          name: string
-          description: string | null
-          status: string
           created_at: string
+          description: string | null
+          id: number
+          instance_id: string
+          name: string
+          status: string
         }
         Insert: {
-          id?: number
-          instance_id: UUID
+          created_at?: string
           description?: string | null
+          id?: number
+          instance_id: string
           name: string
           status?: string
-          created_at?: string
         }
         Update: {
-          id?: number
-          instance_id: UUID
-          description?: string | null
-          name: string
-          status?: string
           created_at?: string
+          description?: string | null
+          id?: number
+          instance_id?: string
+          name?: string
+          status?: string
         }
         Relationships: []
       }
@@ -326,6 +412,7 @@ export type Database = {
           exploitability_score: number
           high: number
           hostname: string | null
+          instance_id: string
           ip_address: unknown
           kev_count: number
           last_scan_date: string | null
@@ -339,6 +426,7 @@ export type Database = {
           exploitability_score: number
           high: number
           hostname?: string | null
+          instance_id: string
           ip_address: unknown
           kev_count: number
           last_scan_date?: string | null
@@ -352,6 +440,7 @@ export type Database = {
           exploitability_score?: number
           high?: number
           hostname?: string | null
+          instance_id?: string
           ip_address?: unknown
           kev_count?: number
           last_scan_date?: string | null
@@ -360,7 +449,15 @@ export type Database = {
           most_common_category?: string | null
           total_vulnerabilities?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ip_insights_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       most_exploitable: {
         Row: {
@@ -369,6 +466,7 @@ export type Database = {
           high_count: number
           host: string
           id: number
+          instance_id: string
           low_count: number
           medium_count: number
           total_vulnerabilities: number
@@ -379,6 +477,7 @@ export type Database = {
           high_count: number
           host: string
           id?: number
+          instance_id: string
           low_count: number
           medium_count: number
           total_vulnerabilities: number
@@ -389,36 +488,57 @@ export type Database = {
           high_count?: number
           host?: string
           id?: number
+          instance_id?: string
           low_count?: number
           medium_count?: number
           total_vulnerabilities?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "most_exploitable_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       mttm_by_severity: {
         Row: {
           average_mttm_days: number
           id: number
+          instance_id: string
           risk_severity: string
           vulnerability_count: number
         }
         Insert: {
           average_mttm_days: number
           id?: number
+          instance_id: string
           risk_severity: string
           vulnerability_count: number
         }
         Update: {
           average_mttm_days?: number
           id?: number
+          instance_id?: string
           risk_severity?: string
           vulnerability_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mttm_by_severity_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       patch_availability: {
         Row: {
           id: number
+          instance_id: string
           risk_severity: string
           total_patches_to_be_applied: number
           vulnerabilities_with_patch_available: number
@@ -426,6 +546,7 @@ export type Database = {
         }
         Insert: {
           id?: number
+          instance_id: string
           risk_severity: string
           total_patches_to_be_applied: number
           vulnerabilities_with_patch_available: number
@@ -433,17 +554,27 @@ export type Database = {
         }
         Update: {
           id?: number
+          instance_id?: string
           risk_severity?: string
           total_patches_to_be_applied?: number
           vulnerabilities_with_patch_available?: number
           vulnerabilities_with_patch_not_available?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patch_availability_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       patch_details: {
         Row: {
           cve: string
           id: number
+          instance_id: string
           patch_status: string
           source: string | null
           tags: string | null
@@ -452,6 +583,7 @@ export type Database = {
         Insert: {
           cve: string
           id?: number
+          instance_id: string
           patch_status: string
           source?: string | null
           tags?: string | null
@@ -460,18 +592,28 @@ export type Database = {
         Update: {
           cve?: string
           id?: number
+          instance_id?: string
           patch_status?: string
           source?: string | null
           tags?: string | null
           url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patch_details_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       prioritization_insights: {
         Row: {
           critical_count: number
           high_count: number
           id: number
+          instance_id: string
           low_count: number
           medium_count: number
           metric: string
@@ -480,6 +622,7 @@ export type Database = {
           critical_count: number
           high_count: number
           id?: number
+          instance_id: string
           low_count: number
           medium_count: number
           metric: string
@@ -488,101 +631,114 @@ export type Database = {
           critical_count?: number
           high_count?: number
           id?: number
+          instance_id?: string
           low_count?: number
           medium_count?: number
           metric?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prioritization_insights_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       remediation_insights: {
         Row: {
           id: number
+          instance_id: string
           observations_impacted: number
           percentage: number | null
           remediation: string
         }
         Insert: {
           id?: number
+          instance_id: string
           observations_impacted: number
           percentage?: number | null
           remediation: string
         }
         Update: {
           id?: number
+          instance_id?: string
           observations_impacted?: number
           percentage?: number | null
           remediation?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "remediation_insights_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       remediation_to_unique_vulnerabilities: {
         Row: {
           id: number
+          instance_id: string
           remediation: string
           risk_rating: string
           unique_vulnerability: string
         }
         Insert: {
           id?: number
+          instance_id: string
           remediation: string
           risk_rating: string
           unique_vulnerability: string
         }
         Update: {
           id?: number
+          instance_id?: string
           remediation?: string
           risk_rating?: string
           unique_vulnerability?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "remediation_to_unique_vulnerabilities_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       risk_summary: {
         Row: {
           count: number
           created_at: string
+          instance_id: string
           severity: string
           vulnerabilities_with_cve: number
         }
         Insert: {
           count: number
           created_at?: string
+          instance_id: string
           severity: string
           vulnerabilities_with_cve: number
         }
         Update: {
           count?: number
           created_at?: string
+          instance_id?: string
           severity?: string
           vulnerabilities_with_cve?: number
         }
-        Relationships: []
-      }
-      runs: {
-        Row: {
-          created_at: string
-          id: number
-          instance_id: number
-          run_number: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          instance_id: number
-          run_number: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          instance_id?: number
-          run_number?: number
-        }
         Relationships: [
           {
-            foreignKeyName: "runs_instance_id_fkey"
+            foreignKeyName: "risk_summary_instance_id_fkey"
             columns: ["instance_id"]
             isOneToOne: false
             referencedRelation: "instances"
-            referencedColumns: ["id"]
+            referencedColumns: ["instance_id"]
           },
         ]
       }
@@ -591,18 +747,29 @@ export type Database = {
           asset_count: number
           assets_type: string
           id: number
+          instance_id: string
         }
         Insert: {
           asset_count: number
           assets_type: string
           id?: number
+          instance_id: string
         }
         Update: {
           asset_count?: number
           assets_type?: string
           id?: number
+          instance_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "unique_assets_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       unique_vulnerabilities: {
         Row: {
@@ -611,6 +778,7 @@ export type Database = {
           cvss_score: string | null
           epss_score: string | null
           instance_count: number
+          instance_id: string
           kev_listed: boolean
           remediation: string | null
           severity: string
@@ -622,6 +790,7 @@ export type Database = {
           cvss_score?: string | null
           epss_score?: string | null
           instance_count: number
+          instance_id: string
           kev_listed: boolean
           remediation?: string | null
           severity: string
@@ -633,12 +802,21 @@ export type Database = {
           cvss_score?: string | null
           epss_score?: string | null
           instance_count?: number
+          instance_id?: string
           kev_listed?: boolean
           remediation?: string | null
           severity?: string
           vulnerability_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "unique_vulnerabilities_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
       vulnerability_clustering: {
         Row: {
@@ -647,6 +825,7 @@ export type Database = {
           critical: number
           cve_count: number
           high: number
+          instance_id: string
           kev_count: number
           low: number
           medium: number
@@ -659,6 +838,7 @@ export type Database = {
           critical: number
           cve_count: number
           high: number
+          instance_id: string
           kev_count: number
           low: number
           medium: number
@@ -671,13 +851,22 @@ export type Database = {
           critical?: number
           cve_count?: number
           high?: number
+          instance_id?: string
           kev_count?: number
           low?: number
           medium?: number
           product_service?: string
           total_vulnerabilities?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vulnerability_clustering_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          },
+        ]
       }
     }
     Views: {

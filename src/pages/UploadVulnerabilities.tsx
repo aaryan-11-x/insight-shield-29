@@ -31,7 +31,7 @@ export default function UploadVulnerabilities() {
     setIsUploading(false);
     
     // Redirect to dashboard after successful upload
-    navigate("/");
+    navigate("/dashboard");
   };
 
   const handleBack = () => {
