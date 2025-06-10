@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface RemediationData {
   id: number;
@@ -35,9 +36,12 @@ export default function Remediation() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Remediation Insights</h1>
-          <p className="text-muted-foreground">Track remediation progress and prioritize actions</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Remediation Insights</h1>
+            <p className="text-muted-foreground">Track remediation progress and prioritize actions</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading remediation data...</p>
@@ -48,9 +52,12 @@ export default function Remediation() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Remediation Insights</h1>
-        <p className="text-muted-foreground">Track remediation progress and prioritize actions</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Remediation Insights</h1>
+          <p className="text-muted-foreground">Track remediation progress and prioritize actions</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* Remediation Insights Table */}

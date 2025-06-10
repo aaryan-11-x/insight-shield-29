@@ -1,5 +1,6 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 const totalVulnerabilitiesData = [
   { timestamp: "2024-01-01", totalVulnerabilities: 45234 },
@@ -34,9 +35,12 @@ const severityTrendsData = [
 export default function RiskTrajectory() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Risk Trajectory</h1>
-        <p className="text-muted-foreground">Vulnerability trends and risk evolution over time</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Risk Trajectory</h1>
+          <p className="text-muted-foreground">Vulnerability trends and risk evolution over time</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* Total Vulnerabilities Over Time */}
