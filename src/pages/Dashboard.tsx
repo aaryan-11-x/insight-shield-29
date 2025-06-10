@@ -10,6 +10,7 @@ export default function Dashboard() {
   const { data: cveData } = useQuery({
     queryKey: ['cve-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('cve_summary')
         .select('cve, count')
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const { data: hostData } = useQuery({
     queryKey: ['host-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('host_summary')
         .select('*')
@@ -43,6 +45,7 @@ export default function Dashboard() {
   const { data: clusteringData } = useQuery({
     queryKey: ['vulnerability-clustering'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('vulnerability_clustering')
         .select('product_service, total_vulnerabilities')
@@ -63,6 +66,7 @@ export default function Dashboard() {
   const { data: agingData } = useQuery({
     queryKey: ['aging-data'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('ageing_of_vulnerability')
         .select('days_after_discovery')
@@ -99,6 +103,7 @@ export default function Dashboard() {
   const { data: assetsData } = useQuery({
     queryKey: ['unique-assets'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('unique_assets')
         .select('*')
@@ -118,6 +123,7 @@ export default function Dashboard() {
   const { data: riskData } = useQuery({
     queryKey: ['risk-summary'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('risk_summary')
         .select('*')
