@@ -1,8 +1,10 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface EOLIPData {
   ip_address: unknown;
@@ -56,9 +58,12 @@ export default function EOLIPs() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">EOL IPs</h1>
-          <p className="text-muted-foreground">IP address analysis for end-of-life component tracking</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">EOL IPs</h1>
+            <p className="text-muted-foreground">IP address analysis for end-of-life component tracking</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL IP data...</p>
@@ -69,9 +74,12 @@ export default function EOLIPs() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">EOL IPs</h1>
-        <p className="text-muted-foreground">IP address analysis for end-of-life component tracking</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">EOL IPs</h1>
+          <p className="text-muted-foreground">IP address analysis for end-of-life component tracking</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* SEoL IP Statistics - Full Width */}
@@ -126,7 +134,7 @@ export default function EOLIPs() {
               <tbody>
                 {topIPsForChart.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                    <td className="py-3 px-4 font-mono text-sm">{item.ip_address}</td>
+                    <td className="py-3 px-4 font-mono text-sm">{String(item.ip_address)}</td>
                     <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>
                     <td className="py-3 px-4 text-center">
                       <Badge variant={
@@ -185,7 +193,7 @@ export default function EOLIPs() {
             <tbody>
               {eolIPData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                  <td className="py-3 px-4 font-mono text-sm">{item.ip_address}</td>
+                  <td className="py-3 px-4 font-mono text-sm">{String(item.ip_address)}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>
                   <td className="py-3 px-4 text-center">
                     <Badge variant={

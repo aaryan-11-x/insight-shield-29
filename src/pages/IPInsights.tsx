@@ -1,7 +1,9 @@
+
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface IPInsightsData {
   ip_address: string;
@@ -45,7 +47,7 @@ export default function IPInsights() {
     hostsWithVulnerabilities: ipData.filter(host => host.total_vulnerabilities > 0).length,
     hostsWithCritical: ipData.filter(host => host.critical > 0).length,
     hostsWithHigh: ipData.filter(host => host.high > 0).length,
-    top5Hosts: ipData.slice(0, 5).map(host => host.ip_address).join(', ')
+    top5Hosts: ipData.slice(0, 5).map(host => String(host.ip_address)).join(', ')
   } : {
     totalHosts: 0,
     totalVulnerabilities: 0,
@@ -65,9 +67,12 @@ export default function IPInsights() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">IP Insights</h1>
-          <p className="text-muted-foreground">This sheet provides a detailed breakdown of vulnerabilities per IP, facilitating operational planning and remediation prioritization</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">IP Insights</h1>
+            <p className="text-muted-foreground">This sheet provides a detailed breakdown of vulnerabilities per IP, facilitating operational planning and remediation prioritization</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading IP insights data...</p>
@@ -78,9 +83,12 @@ export default function IPInsights() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">IP Insights</h1>
-        <p className="text-muted-foreground">This sheet provides a detailed breakdown of vulnerabilities per IP, facilitating operational planning and remediation prioritization</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">IP Insights</h1>
+          <p className="text-muted-foreground">This sheet provides a detailed breakdown of vulnerabilities per IP, facilitating operational planning and remediation prioritization</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* Summary Cards */}
@@ -205,7 +213,7 @@ export default function IPInsights() {
             <tbody>
               {ipData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
-                  <td className="py-3 px-2 font-mono text-xs">{item.ip_address}</td>
+                  <td className="py-3 px-2 font-mono text-xs">{String(item.ip_address)}</td>
                   <td className="py-3 px-2">{item.hostname || "—"}</td>
                   <td className="py-3 px-2 text-center font-bold">{item.total_vulnerabilities}</td>
                   <td className="py-3 px-2 text-center">

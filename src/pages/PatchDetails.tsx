@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
@@ -5,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface PatchDetailsData {
   cve: string;
@@ -48,6 +50,7 @@ export default function PatchDetails() {
   const { data: patchAvailabilityData, isLoading: availabilityLoading } = useQuery({
     queryKey: ['patch-availability'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('patch_availability')
         .select('*')
@@ -73,9 +76,12 @@ export default function PatchDetails() {
   if (isLoading || availabilityLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Patch Details</h1>
-          <p className="text-muted-foreground">Detailed information about available patches</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Patch Details</h1>
+            <p className="text-muted-foreground">Detailed information about available patches</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading patch data...</p>
@@ -86,9 +92,12 @@ export default function PatchDetails() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Patch Details</h1>
-        <p className="text-muted-foreground">Detailed information about available patches</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Patch Details</h1>
+          <p className="text-muted-foreground">Detailed information about available patches</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* Patch Availability by Severity */}

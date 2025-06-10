@@ -1,14 +1,15 @@
+
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface RemediationUniqueData {
   id: number;
   remediation: string;
   unique_vulnerability: string;
-  observations_impacted: number;
-  percentage: number | null;
+  risk_rating: string;
   instance_id: UUID;
 }
 
@@ -18,10 +19,10 @@ export default function RemediationUnique() {
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
-        .from('remediation_unique_insights')
+        .from('remediation_to_unique_vulnerabilities')
         .select('*')
         .eq('instance_id', instanceId)
-        .order('observations_impacted', { ascending: false });
+        .order('id');
       
       if (error) {
         console.error('Error fetching remediation unique data:', error);
@@ -35,9 +36,12 @@ export default function RemediationUnique() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Remediation-Unique Vulnerabilities</h1>
-          <p className="text-muted-foreground">Mapping of remediation actions to unique vulnerabilities</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Remediation-Unique Vulnerabilities</h1>
+            <p className="text-muted-foreground">Mapping of remediation actions to unique vulnerabilities</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading remediation data...</p>
@@ -48,9 +52,12 @@ export default function RemediationUnique() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Remediation-Unique Vulnerabilities</h1>
-        <p className="text-muted-foreground">Mapping of remediation actions to unique vulnerabilities</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Remediation-Unique Vulnerabilities</h1>
+          <p className="text-muted-foreground">Mapping of remediation actions to unique vulnerabilities</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       <div className="chart-container">
