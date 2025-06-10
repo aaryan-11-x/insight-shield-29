@@ -13,6 +13,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('cve_summary')
         .select('cve, count')
+        .eq('instance_id', instanceId)
         .order('count', { ascending: false })
         .limit(10);
       
@@ -28,6 +29,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('host_summary')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('vulnerability_count', { ascending: false })
         .order('vulnerabilities_with_cve', { ascending: false })
         .limit(10);
@@ -44,6 +46,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('vulnerability_clustering')
         .select('product_service, total_vulnerabilities')
+        .eq('instance_id', instanceId)
         .order('total_vulnerabilities', { ascending: false })
         .limit(8);
       
@@ -62,7 +65,8 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('ageing_of_vulnerability')
-        .select('days_after_discovery');
+        .select('days_after_discovery')
+        .eq('instance_id', instanceId);
       
       if (error) throw error;
       
@@ -97,7 +101,8 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('unique_assets')
-        .select('*');
+        .select('*')
+        .eq('instance_id', instanceId);
       
       if (error) throw error;
       
@@ -116,6 +121,7 @@ export default function Dashboard() {
       const { data, error } = await supabase
         .from('risk_summary')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('count', { ascending: false });
       
       if (error) throw error;
