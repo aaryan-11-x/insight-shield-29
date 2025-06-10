@@ -175,7 +175,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Vulnerability Visualization</h1>
           <p className="text-muted-foreground">Comprehensive security overview and threat assessment</p>
         </div>
-        <DownloadDropdown onDownloadExcel={handleDownloadReport} onDownloadPDF={handleDownloadReport} />
+        <DownloadDropdown onDownloadExcel={handleDownloadReport} onDownloadPDF={handleDownloadReport} buttonText="Download Report" />
       </div>
 
       {/* Clickable Metrics Grid */}

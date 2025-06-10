@@ -11,9 +11,10 @@ import { Download, FileText, FileSpreadsheet } from "lucide-react";
 interface DownloadDropdownProps {
   onDownloadPDF?: () => void;
   onDownloadExcel?: () => void;
+  buttonText?: string;
 }
 
-export function DownloadDropdown({ onDownloadPDF, onDownloadExcel }: DownloadDropdownProps) {
+export function DownloadDropdown({ onDownloadPDF, onDownloadExcel, buttonText = "Download Sheet" }: DownloadDropdownProps) {
   const handleDownloadPDF = () => {
     console.log("Downloading PDF report...");
     if (onDownloadPDF) onDownloadPDF();
@@ -29,7 +30,7 @@ export function DownloadDropdown({ onDownloadPDF, onDownloadExcel }: DownloadDro
       <DropdownMenuTrigger asChild>
         <Button className="flex items-center gap-2">
           <Download className="h-4 w-4" />
-          Download Report
+          {buttonText}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
