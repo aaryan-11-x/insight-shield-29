@@ -22,6 +22,7 @@ interface PatchAvailabilityData {
   vulnerabilities_with_patch_available: number;
   vulnerabilities_with_patch_not_available: number;
   total_patches_to_be_applied: number;
+  instance_id: UUID;
 }
 
 export default function PatchDetails() {
@@ -50,6 +51,7 @@ export default function PatchDetails() {
       const { data, error } = await supabase
         .from('patch_availability')
         .select('*')
+        .eq('instance_id', instanceId)
         .order('risk_severity');
       
       if (error) {

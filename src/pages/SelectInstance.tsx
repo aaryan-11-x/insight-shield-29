@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Server, Shield, AlertTriangle, ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Instance {
   id: number;
@@ -41,6 +41,8 @@ export default function SelectInstance() {
 
   const handleSelect = () => {
     if (selectedInstance) {
+      // Store the selected instance ID in localStorage
+      localStorage.setItem('currentInstanceId', selectedInstance);
       navigate("/dashboard");
     }
   };
@@ -67,7 +69,7 @@ export default function SelectInstance() {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background p-6 flex items-center justify-center">
         <div className="text-center">Loading instances...</div>
@@ -95,9 +97,15 @@ export default function SelectInstance() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RadioGroup value={selectedInstance} onValueChange={setSelectedInstance}>
+            <RadioGroup 
+              value={selectedInstance} 
+              onValueChange={(value) => {
+                setSelectedInstance(value);
+                localStorage.setItem('currentInstanceId', value);
+              }}
+            >
               <div className="grid gap-4">
-                {instances.map((instance) => (
+                {instances?.map((instance) => (
                   <div key={instance.id} className="relative">
                     <RadioGroupItem 
                       value={instance.instance_id} 
