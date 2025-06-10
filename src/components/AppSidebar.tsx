@@ -1,3 +1,4 @@
+
 import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -194,10 +195,10 @@ export function AppSidebar() {
                     {item.subItems ? (
                       <Collapsible>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton className="w-full flex items-center gap-3 px-3 py-2 text-left">
+                          <SidebarMenuButton className="w-full flex items-center gap-3 px-3 py-2 text-left group">
                             <item.icon className="h-4 w-4" />
                             <span className="flex-1">{item.title}</span>
-                            <ChevronRight className="h-4 w-4 transition-transform group-data-[state=open]:rotate-90" />
+                            <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
@@ -209,7 +210,7 @@ export function AppSidebar() {
                                   onClick={() => navigate(subItem.url)}
                                   asChild
                                 >
-                                  <button className="w-full text-left">
+                                  <button className="w-full text-left text-xs">
                                     {subItem.title}
                                   </button>
                                 </SidebarMenuSubButton>

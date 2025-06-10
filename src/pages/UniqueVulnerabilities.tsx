@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface UniqueVulnerabilityData {
   vulnerability_name: string;
@@ -64,9 +65,12 @@ export default function UniqueVulnerabilities() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Unique Vulnerabilities</h1>
-          <p className="text-muted-foreground">Analysis of unique vulnerabilities across the infrastructure</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Unique Vulnerabilities</h1>
+            <p className="text-muted-foreground">Analysis of unique vulnerabilities across the infrastructure</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading unique vulnerabilities data...</p>
@@ -77,9 +81,12 @@ export default function UniqueVulnerabilities() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Unique Vulnerabilities</h1>
-        <p className="text-muted-foreground">Analysis of unique vulnerabilities across the infrastructure</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Unique Vulnerabilities</h1>
+          <p className="text-muted-foreground">Analysis of unique vulnerabilities across the infrastructure</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* Vulnerability Overview Statistics */}
