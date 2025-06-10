@@ -1,11 +1,10 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { SimpleMetricCard } from "@/components/SimpleMetricCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface EOLComponentData {
   created_at: string;
@@ -88,10 +87,7 @@ export default function EOLComponents() {
             <h1 className="text-3xl font-bold">EOL Components</h1>
             <p className="text-muted-foreground">End-of-life component tracking and risk assessment</p>
           </div>
-          <Button className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download Report
-          </Button>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL data...</p>
@@ -107,10 +103,7 @@ export default function EOLComponents() {
           <h1 className="text-3xl font-bold">EOL Components</h1>
           <p className="text-muted-foreground">End-of-life component tracking and risk assessment</p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Download Report
-        </Button>
+        <DownloadDropdown />
       </div>
 
       {/* Unique SEoL Components Table and Chart */}

@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface ClusteringData {
   affected_hosts: number;
@@ -49,9 +50,12 @@ export default function Clustering() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
-          <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
+            <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading vulnerability clustering data...</p>
@@ -62,9 +66,12 @@ export default function Clustering() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
-        <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
+          <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

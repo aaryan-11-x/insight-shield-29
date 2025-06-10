@@ -2,6 +2,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface EOLSummaryData {
   total_unique_components: number;
@@ -51,9 +52,12 @@ export default function EOLSummary() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">EOL Summary</h1>
-          <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">EOL Summary</h1>
+            <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL summary data...</p>
@@ -65,9 +69,12 @@ export default function EOLSummary() {
   if (error || !eolSummaryData) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">EOL Summary</h1>
-          <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">EOL Summary</h1>
+            <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-red-400">Error loading EOL summary data</p>
@@ -93,9 +100,12 @@ export default function EOLSummary() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">EOL Summary</h1>
-        <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">EOL Summary</h1>
+          <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* End of Life Components Summary */}

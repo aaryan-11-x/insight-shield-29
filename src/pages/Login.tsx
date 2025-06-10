@@ -14,7 +14,7 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
-      navigate("/questionnaire");
+      navigate("/instance-choice");
     }
   };
 

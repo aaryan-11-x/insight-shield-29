@@ -1,9 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface CVEData {
   instance_id: UUID;
@@ -53,6 +52,7 @@ export default function CVESummary() {
             <h1 className="text-3xl font-bold">CVE Summary</h1>
             <p className="text-muted-foreground">CVE summary and executive overview</p>
           </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading CVE data...</p>
@@ -69,6 +69,7 @@ export default function CVESummary() {
             <h1 className="text-3xl font-bold">CVE Summary</h1>
             <p className="text-muted-foreground">CVE summary and executive overview</p>
           </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-red-400">Error loading CVE data: {error.message}</p>
@@ -84,10 +85,7 @@ export default function CVESummary() {
           <h1 className="text-3xl font-bold">CVE Summary</h1>
           <p className="text-muted-foreground">CVE summary and executive overview</p>
         </div>
-        <Button className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Download Report
-        </Button>
+        <DownloadDropdown />
       </div>
 
       {/* Summary Statistics */}

@@ -3,6 +3,7 @@ import { SimpleMetricCard } from "@/components/SimpleMetricCard";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface EOLVersionData {
   instance_count: number;
@@ -56,9 +57,12 @@ export default function EOLVersions() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">EOL Versions</h1>
-          <p className="text-muted-foreground">Detailed analysis of end-of-life software versions and distribution</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">EOL Versions</h1>
+            <p className="text-muted-foreground">Detailed analysis of end-of-life software versions and distribution</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL versions data...</p>
@@ -69,9 +73,12 @@ export default function EOLVersions() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">EOL Versions</h1>
-        <p className="text-muted-foreground">Detailed analysis of end-of-life software versions and distribution</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">EOL Versions</h1>
+          <p className="text-muted-foreground">Detailed analysis of end-of-life software versions and distribution</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       {/* Summary Cards */}

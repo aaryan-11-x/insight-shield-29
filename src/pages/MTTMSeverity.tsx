@@ -2,6 +2,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
+import { DownloadDropdown } from "@/components/DownloadDropdown";
 
 interface MTTMSeverityData {
   average_mttm_days: number;
@@ -44,9 +45,12 @@ export default function MTTMSeverity() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">MTTM by Severity</h1>
-          <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">MTTM by Severity</h1>
+            <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
+          </div>
+          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading MTTM data...</p>
@@ -57,9 +61,12 @@ export default function MTTMSeverity() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">MTTM by Severity</h1>
-        <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">MTTM by Severity</h1>
+          <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
+        </div>
+        <DownloadDropdown />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
