@@ -1,16 +1,54 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Upload, FileSpreadsheet, CheckCircle, ArrowLeft } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+
+interface AnalysisResponse {
+  status: 'success' | 'error';
+  message: string;
+  output_files: {
+    standard_report: string;
+    enhanced_workbook: string;
+    json_results: string;
+  };
+  completed: boolean;
+  redirect: boolean;
+}
 
 export default function UploadVulnerabilities() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState("");
   const navigate = useNavigate();
+
+  const steps = [
+    "Uploading file...",
+    "Analyzing vulnerabilities...",
+    "Generating tables...",
+    "Creating charts...",
+    "Preparing final report..."
+  ];
+
+  useEffect(() => {
+    let stepIndex = 0;
+    let interval: NodeJS.Timeout;
+
+    if (isUploading) {
+      interval = setInterval(() => {
+        setCurrentStep(steps[stepIndex]);
+        stepIndex = (stepIndex + 1) % steps.length;
+      }, 2000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isUploading]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -23,15 +61,87 @@ export default function UploadVulnerabilities() {
     if (!selectedFile) return;
 
     setIsUploading(true);
+    setUploadProgress(0);
     
-    // Simulate file upload
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log("Uploading file:", selectedFile.name);
-    setIsUploading(false);
-    
-    // Redirect to dashboard after successful upload
-    navigate("/dashboard");
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const xhr = new XMLHttpRequest();
+      
+      // Get instance ID from localStorage
+      const instanceId = localStorage.getItem('currentInstanceId');
+      if (!instanceId) {
+        throw new Error('No instance ID found. Please create an instance first.');
+      }
+      
+      // Create a promise to handle the XHR request
+      const uploadPromise = new Promise<AnalysisResponse>((resolve, reject) => {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = (event.loaded / event.total) * 100;
+            setUploadProgress(Math.round(progress));
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              console.log('Raw response:', xhr.responseText); // Log the raw response
+              const response = JSON.parse(xhr.responseText) as AnalysisResponse;
+              if (response.status === 'success' && response.redirect) {
+                resolve(response);
+              } else {
+                reject(new Error('Analysis completed but redirection failed'));
+              }
+            } catch (parseError) {
+              console.error('JSON Parse Error:', parseError);
+              console.error('Response Text:', xhr.responseText);
+              reject(new Error('Invalid JSON response from server'));
+            }
+          } else {
+            console.error('Server Error:', xhr.status, xhr.responseText);
+            reject(new Error(`Server error: ${xhr.status} - ${xhr.responseText}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => {
+          console.error('Network Error:', xhr.status, xhr.responseText);
+          reject(new Error('Network error occurred'));
+        });
+
+        xhr.addEventListener('abort', () => {
+          console.error('Request Aborted');
+          reject(new Error('Request was aborted'));
+        });
+      });
+
+      xhr.open('POST', 'http://localhost:8000/analyze');
+      // Add the instance ID header
+      xhr.setRequestHeader('X-Current-Instance-Id', instanceId);
+      xhr.send(formData);
+
+      const result = await uploadPromise;
+      console.log('Analysis result:', result);
+      
+      // Store the analysis results in localStorage or state management
+      localStorage.setItem('analysisResults', JSON.stringify(result));
+      
+      // Set progress to 100% before redirecting
+      setUploadProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to show 100%
+      
+      // Ensure we're in a valid state before redirecting
+      if (result.status === 'success' && result.redirect) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      // You might want to show an error message to the user here
+      setIsUploading(false);
+    }
   };
 
   const handleBack = () => {
@@ -104,6 +214,15 @@ export default function UploadVulnerabilities() {
               </div>
             )}
 
+            {isUploading && (
+              <div className="space-y-4">
+                <Progress value={uploadProgress} className="h-2" />
+                <p className="text-sm text-muted-foreground text-center animate-pulse">
+                  {currentStep}
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3 text-sm text-muted-foreground">
               <h4 className="font-medium text-foreground">File Requirements:</h4>
               <ul className="list-disc list-inside space-y-1">
@@ -123,7 +242,7 @@ export default function UploadVulnerabilities() {
                 disabled={!selectedFile || !isExcelFile || isUploading}
                 className="flex-1"
               >
-                {isUploading ? "Uploading..." : "Upload & Continue"}
+                {isUploading ? "Processing..." : "Upload & Continue"}
               </Button>
             </div>
           </CardContent>
