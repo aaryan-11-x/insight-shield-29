@@ -1,53 +1,68 @@
+
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { UUID } from "crypto";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
 
-interface EOLSummaryData {
-  total_unique_components: number;
-  software_types_affected: number;
-  hosts_with_eol_components: number;
-  unique_eol_versions: number;
-  critical_count: number;
-  high_count: number;
-  medium_count: number;
-  low_count: number;
-  critical_pct: number;
-  high_pct: number;
-  medium_pct: number;
-  low_pct: number;
-  asp_net_core_count: number;
-  microsoft_dotnet_core_count: number;
-  apache_log4j_count: number;
-  dotnet_core_sdk_count: number;
-  microsoft_silverlight_count: number;
-  total_count: number;
-  created_at: string;
-  id: number;
-  instance_id: UUID;
-}
-
 export default function EOLSummary() {
-  const { data: eolSummaryData, isLoading, error } = useQuery({
-    queryKey: ['eol-summary'],
+  // Fetch EOL Components data
+  const { data: eolComponentsData, isLoading: componentsLoading } = useQuery({
+    queryKey: ['eol-components'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
-        .from('eol_summary')
+        .from('eol_components')
         .select('*')
-        .eq('instance_id', instanceId)
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('instance_id', instanceId);
       
       if (error) {
-        console.error('Error fetching EOL summary data:', error);
+        console.error('Error fetching EOL components data:', error);
         throw error;
       }
       
-      return data?.[0];
+      return data;
     }
   });
+
+  // Fetch EOL IP data
+  const { data: eolIpData, isLoading: ipLoading } = useQuery({
+    queryKey: ['eol-ip'],
+    queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const { data, error } = await supabase
+        .from('eol_ip')
+        .select('*')
+        .eq('instance_id', instanceId);
+      
+      if (error) {
+        console.error('Error fetching EOL IP data:', error);
+        throw error;
+      }
+      
+      return data;
+    }
+  });
+
+  // Fetch EOL Versions data
+  const { data: eolVersionsData, isLoading: versionsLoading } = useQuery({
+    queryKey: ['eol-versions'],
+    queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const { data, error } = await supabase
+        .from('eol_versions')
+        .select('*')
+        .eq('instance_id', instanceId);
+      
+      if (error) {
+        console.error('Error fetching EOL versions data:', error);
+        throw error;
+      }
+      
+      return data;
+    }
+  });
+
+  const isLoading = componentsLoading || ipLoading || versionsLoading;
 
   if (isLoading) {
     return (
@@ -66,7 +81,7 @@ export default function EOLSummary() {
     );
   }
 
-  if (error || !eolSummaryData) {
+  if (!eolComponentsData || !eolIpData || !eolVersionsData) {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -83,20 +98,59 @@ export default function EOLSummary() {
     );
   }
 
+  // Calculate metrics from the actual data
+  const totalUniqueComponents = eolComponentsData.length;
+  const softwareTypesAffected = eolComponentsData.length; // Based on requirement
+  const hostsWithEolComponents = eolIpData.length;
+  const uniqueEolVersions = eolVersionsData.length;
+
+  // Calculate risk distribution from EOL IP data
+  const riskDistribution = eolIpData.reduce((acc, item) => {
+    const risk = item.risk_level?.toLowerCase() || 'unknown';
+    acc[risk] = (acc[risk] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const totalRiskItems = Object.values(riskDistribution).reduce((sum, count) => sum + count, 0);
+
   const pieChartData = [
-    { name: "Critical", value: eolSummaryData.critical_count, color: "#ef4444" },
-    { name: "High", value: eolSummaryData.high_count, color: "#f97316" },
-    { name: "Medium", value: eolSummaryData.medium_count, color: "#eab308" },
-    { name: "Low", value: eolSummaryData.low_count, color: "#22c55e" }
+    { 
+      name: "Critical", 
+      value: riskDistribution.critical || 0, 
+      color: "#ef4444",
+      percentage: totalRiskItems > 0 ? ((riskDistribution.critical || 0) / totalRiskItems * 100).toFixed(1) : '0.0'
+    },
+    { 
+      name: "High", 
+      value: riskDistribution.high || 0, 
+      color: "#f97316",
+      percentage: totalRiskItems > 0 ? ((riskDistribution.high || 0) / totalRiskItems * 100).toFixed(1) : '0.0'
+    },
+    { 
+      name: "Medium", 
+      value: riskDistribution.medium || 0, 
+      color: "#eab308",
+      percentage: totalRiskItems > 0 ? ((riskDistribution.medium || 0) / totalRiskItems * 100).toFixed(1) : '0.0'
+    },
+    { 
+      name: "Low", 
+      value: riskDistribution.low || 0, 
+      color: "#22c55e",
+      percentage: totalRiskItems > 0 ? ((riskDistribution.low || 0) / totalRiskItems * 100).toFixed(1) : '0.0'
+    }
   ];
 
-  const topEOLSoftwareTypes = [
-    { name: "ASP.NET Core", count: eolSummaryData.asp_net_core_count },
-    { name: "Microsoft .NET Core", count: eolSummaryData.microsoft_dotnet_core_count },
-    { name: "Apache Log4j", count: eolSummaryData.apache_log4j_count },
-    { name: ".NET Core SDK", count: eolSummaryData.dotnet_core_sdk_count },
-    { name: "Microsoft Silverlight", count: eolSummaryData.microsoft_silverlight_count }
-  ].sort((a, b) => b.count - a.count);
+  // Calculate software types from EOL versions data
+  const softwareTypeCount = eolVersionsData.reduce((acc, item) => {
+    const softwareType = item.software_type;
+    acc[softwareType] = (acc[softwareType] || 0) + item.instance_count;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topEOLSoftwareTypes = Object.entries(softwareTypeCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10); // Show top 10
 
   return (
     <div className="space-y-6">
@@ -119,25 +173,25 @@ export default function EOLSummary() {
             <div className="metric-card">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Total Unique EOL Components</p>
-                <p className="text-2xl font-bold">{eolSummaryData.total_unique_components}</p>
+                <p className="text-2xl font-bold">{totalUniqueComponents}</p>
               </div>
             </div>
             <div className="metric-card">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Software Types Affected</p>
-                <p className="text-2xl font-bold">{eolSummaryData.software_types_affected}</p>
+                <p className="text-2xl font-bold">{softwareTypesAffected}</p>
               </div>
             </div>
             <div className="metric-card">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Hosts with EOL Components</p>
-                <p className="text-2xl font-bold">{eolSummaryData.hosts_with_eol_components}</p>
+                <p className="text-2xl font-bold">{hostsWithEolComponents}</p>
               </div>
             </div>
             <div className="metric-card">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Unique EOL Versions</p>
-                <p className="text-2xl font-bold">{eolSummaryData.unique_eol_versions}</p>
+                <p className="text-2xl font-bold">{uniqueEolVersions}</p>
               </div>
             </div>
           </div>
@@ -158,22 +212,22 @@ export default function EOLSummary() {
               </thead>
               <tbody>
                 <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 text-center text-red-400 font-bold">{eolSummaryData.critical_count}</td>
-                  <td className="py-3 px-4 text-center text-orange-400 font-bold">{eolSummaryData.high_count}</td>
-                  <td className="py-3 px-4 text-center text-yellow-400 font-bold">{eolSummaryData.medium_count}</td>
-                  <td className="py-3 px-4 text-center text-green-400 font-bold">{eolSummaryData.low_count}</td>
+                  <td className="py-3 px-4 text-center text-red-400 font-bold">{riskDistribution.critical || 0}</td>
+                  <td className="py-3 px-4 text-center text-orange-400 font-bold">{riskDistribution.high || 0}</td>
+                  <td className="py-3 px-4 text-center text-yellow-400 font-bold">{riskDistribution.medium || 0}</td>
+                  <td className="py-3 px-4 text-center text-green-400 font-bold">{riskDistribution.low || 0}</td>
                 </tr>
                 <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 text-center">{eolSummaryData.critical_pct.toFixed(1)}%</td>
-                  <td className="py-3 px-4 text-center">{eolSummaryData.high_pct.toFixed(1)}%</td>
-                  <td className="py-3 px-4 text-center">{eolSummaryData.medium_pct.toFixed(1)}%</td>
-                  <td className="py-3 px-4 text-center">{eolSummaryData.low_pct.toFixed(1)}%</td>
+                  <td className="py-3 px-4 text-center">{pieChartData[0].percentage}%</td>
+                  <td className="py-3 px-4 text-center">{pieChartData[1].percentage}%</td>
+                  <td className="py-3 px-4 text-center">{pieChartData[2].percentage}%</td>
+                  <td className="py-3 px-4 text-center">{pieChartData[3].percentage}%</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr className="border-t border-border">
                   <td colSpan={3} className="py-3 px-4 font-semibold">Total</td>
-                  <td className="py-3 px-4 text-center font-bold">{eolSummaryData.total_count}</td>
+                  <td className="py-3 px-4 text-center font-bold">{totalRiskItems}</td>
                 </tr>
               </tfoot>
             </table>
@@ -227,7 +281,7 @@ export default function EOLSummary() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
+                  label={({ name, percentage }) => `${name} ${percentage}%`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="value"

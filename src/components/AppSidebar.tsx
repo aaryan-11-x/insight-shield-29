@@ -244,7 +244,7 @@ export function AppSidebar() {
             onClick={handleSelectInstance}
           >
             <RefreshCw className="h-4 w-4" />
-            <span>Select Instance</span>
+            <span>Select Another Instance</span>
           </Button>
           <Button
             variant="ghost"
