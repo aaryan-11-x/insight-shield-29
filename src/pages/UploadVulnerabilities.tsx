@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Upload, FileSpreadsheet, CheckCircle, ArrowLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
 interface AnalysisResponse {
   status: 'success' | 'error';
@@ -25,6 +27,7 @@ export default function UploadVulnerabilities() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState("");
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const steps = [
     "Uploading file...",
@@ -72,7 +75,13 @@ export default function UploadVulnerabilities() {
       // Get instance ID from localStorage
       const instanceId = localStorage.getItem('currentInstanceId');
       if (!instanceId) {
-        throw new Error('No instance ID found. Please create an instance first.');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No instance ID found. Please create an instance first.",
+          action: <ToastAction altText="Go to instance creation" onClick={() => navigate("/create-instance")}>Create Instance</ToastAction>,
+        });
+        return;
       }
       
       // Create a promise to handle the XHR request
@@ -97,26 +106,47 @@ export default function UploadVulnerabilities() {
             } catch (parseError) {
               console.error('JSON Parse Error:', parseError);
               console.error('Response Text:', xhr.responseText);
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Invalid response from server. Please try again.",
+              });
               reject(new Error('Invalid JSON response from server'));
             }
           } else {
             console.error('Server Error:', xhr.status, xhr.responseText);
+            toast({
+              variant: "destructive",
+              title: "Server Error",
+              description: `Server returned error: ${xhr.status}`,
+            });
             reject(new Error(`Server error: ${xhr.status} - ${xhr.responseText}`));
           }
         });
 
         xhr.addEventListener('error', () => {
           console.error('Network Error:', xhr.status, xhr.responseText);
+          toast({
+            variant: "destructive",
+            title: "Network Error",
+            description: "Failed to connect to the server. Please check your internet connection and try again.",
+            action: <ToastAction altText="Try again" onClick={() => handleUpload()}>Try Again</ToastAction>,
+          });
           reject(new Error('Network error occurred'));
         });
 
         xhr.addEventListener('abort', () => {
           console.error('Request Aborted');
+          toast({
+            variant: "destructive",
+            title: "Upload Cancelled",
+            description: "The file upload was cancelled.",
+          });
           reject(new Error('Request was aborted'));
         });
       });
 
-      xhr.open('POST', 'http://localhost:8000/analyze');
+      xhr.open('POST', 'http://localhost:8000/api/v1/analyze');
       // Add the instance ID header
       xhr.setRequestHeader('X-Current-Instance-Id', instanceId);
       xhr.send(formData);
@@ -131,6 +161,12 @@ export default function UploadVulnerabilities() {
       setUploadProgress(100);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to show 100%
       
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "File uploaded and analyzed successfully!",
+      });
+      
       // Ensure we're in a valid state before redirecting
       if (result.status === 'success' && result.redirect) {
         navigate("/dashboard", { replace: true });
@@ -139,7 +175,6 @@ export default function UploadVulnerabilities() {
       }
     } catch (error) {
       console.error('Error uploading file:', error);
-      // You might want to show an error message to the user here
       setIsUploading(false);
     }
   };
