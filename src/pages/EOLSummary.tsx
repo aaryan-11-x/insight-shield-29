@@ -1,4 +1,3 @@
-
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -292,9 +291,16 @@ export default function EOLSummary() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#1f2937",
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`${name}: ${value}`}</span>,
+                      null
+                    ];
                   }}
                 />
               </PieChart>

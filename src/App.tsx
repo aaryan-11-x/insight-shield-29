@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,6 +34,8 @@ import EOLVersions from "./pages/EOLVersions";
 import EOLComponents from "./pages/EOLComponents";
 import Assets from "./pages/Assets";
 import NotFound from "./pages/NotFound";
+import AccessManagement from "./pages/AccessManagement";
+import RemediationDependencies from "./pages/RemediationDependencies";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,8 @@ const App = () => (
                   <div className="flex-1 p-6">
                     <Routes>
                       <Route path="/" element={<Dashboard />} />
+                      <Route path="/access-management" element={<AccessManagement />} />
+                      <Route path="/remediation-dependencies" element={<RemediationDependencies />} />
                       <Route path="/prioritization" element={<Prioritization />} />
                       <Route path="/exploitability" element={<Exploitability />} />
                       <Route path="/vulnerability-aging" element={<VulnerabilityAging />} />

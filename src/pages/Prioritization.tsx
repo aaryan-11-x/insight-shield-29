@@ -1,4 +1,3 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
@@ -13,6 +12,13 @@ interface PrioritizationData {
   low_count: number;
 }
 
+const METRIC_ORDER = {
+  'CVSS': 1,
+  'EPSS': 2,
+  'VPR': 3,
+  'CISA KEV': 4
+};
+
 export default function Prioritization() {
   const { data: prioritizationData, isLoading } = useQuery({
     queryKey: ['prioritization-insights'],
@@ -21,15 +27,18 @@ export default function Prioritization() {
       const { data, error } = await supabase
         .from('prioritization_insights')
         .select('*')
-        .eq('instance_id', instanceId)
-        .order('metric');
+        .eq('instance_id', instanceId);
       
       if (error) {
         console.error('Error fetching prioritization data:', error);
         throw error;
       }
       
-      return data as PrioritizationData[];
+      // Sort the data based on the predefined order
+      return (data as PrioritizationData[]).sort((a, b) => 
+        (METRIC_ORDER[a.metric as keyof typeof METRIC_ORDER] || 999) - 
+        (METRIC_ORDER[b.metric as keyof typeof METRIC_ORDER] || 999)
+      );
     }
   });
 

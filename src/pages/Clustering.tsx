@@ -112,6 +112,7 @@ export default function Clustering() {
                   outerRadius={120}
                   paddingAngle={5}
                   dataKey="vulnerabilities"
+                  nameKey="product"
                 >
                   {topClustersData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -119,10 +120,17 @@ export default function Clustering() {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
-                  }} 
+                    backgroundColor: "#ffffff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`${name}: ${value}`}</span>,
+                      null
+                    ];
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>

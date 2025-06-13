@@ -167,11 +167,20 @@ export default function EOLComponents() {
                   contentStyle={{ 
                     backgroundColor: "#1f2937", 
                     border: "1px solid #374151",
-                    borderRadius: "8px"
+                    borderRadius: "8px",
+                    color: "#ffffff"
                   }}
-                  formatter={(value, name) => {
+                  formatter={(value, name, props) => {
                     const level = Object.entries(riskValueMap).find(([k, v]) => v === value)?.[0] || "Unknown";
-                    return [level, "Risk Level"];
+                    const color = 
+                      level === "Critical" ? "#ef4444" :
+                      level === "High" ? "#f59e0b" :
+                      level === "Medium" ? "#3b82f6" :
+                      "#10b981";
+                    return [
+                      <span style={{ color: color }}>{`Risk Level: ${level}`}</span>,
+                      null
+                    ];
                   }}
                 />
                 <Bar dataKey="riskValue">

@@ -1,5 +1,4 @@
-
-import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw } from "lucide-react";
+import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw, UserCog, Package, GitBranch } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -31,9 +30,19 @@ import {
 
 const menuItems = [
   {
+    title: "Access Management",
+    url: "/dashboard/access-management",
+    icon: UserCog,
+  },
+  {
     title: "Dashboard Overview",
     url: "/dashboard",
     icon: BarChart,
+  },
+  {
+    title: "Inventory Details",
+    url: "/dashboard/assets",
+    icon: Package,
   },
   {
     title: "Prioritization Insights",
@@ -59,7 +68,7 @@ const menuItems = [
     ],
   },
   {
-    title: "Remediation Summary",
+    title: "Remediation Insights",
     url: "/dashboard/remediation",
     icon: Wrench,
     subItems: [
@@ -101,7 +110,7 @@ const menuItems = [
     ],
   },
   {
-    title: "Higher Management Insights",
+    title: "Management Insights",
     url: "/dashboard/management",
     icon: TrendingUp,
     subItems: [
@@ -124,7 +133,7 @@ const menuItems = [
     ],
   },
   {
-    title: "SEoL Analysis",
+    title: "SEOL Insights",
     url: "/dashboard/seol",
     icon: AlertTriangle,
     subItems: [
@@ -145,6 +154,11 @@ const menuItems = [
         url: "/dashboard/eol-versions",
       },
     ],
+  },
+  {
+    title: "Remediation Dependencies",
+    url: "/dashboard/remediation-dependencies",
+    icon: GitBranch,
   },
 ];
 

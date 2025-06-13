@@ -222,9 +222,16 @@ export default function RiskSummary() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#1f2937",
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`${name}: ${value}`}</span>,
+                      null
+                    ];
                   }}
                 />
               </PieChart>

@@ -25,6 +25,7 @@ export default function UniqueVulnerabilities() {
         .from('unique_vulnerabilities')
         .select('*')
         .eq('instance_id', instanceId)
+        .order('cve', { ascending: true })
         .order('instance_count', { ascending: false });
       
       if (error) {
@@ -32,7 +33,14 @@ export default function UniqueVulnerabilities() {
         throw error;
       }
       
-      return data as UniqueVulnerabilityData[];
+      return (data as UniqueVulnerabilityData[]).sort((a, b) => {
+        if (a.cve && b.cve) {
+          return a.cve.localeCompare(b.cve);
+        }
+        if (a.cve) return -1;
+        if (b.cve) return 1;
+        return b.instance_count - a.instance_count;
+      });
     }
   });
 
@@ -167,7 +175,20 @@ export default function UniqueVulnerabilities() {
                   interval={0}
                 />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`Instance Count: ${value}`}</span>,
+                      null
+                    ];
+                  }}
+                />
                 <Bar dataKey="instance_count" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>

@@ -226,9 +226,10 @@ export default function Dashboard() {
                 <YAxis stroke="#9ca3af" />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
+                    backgroundColor: "#ffffff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
                   }} 
                 />
                 <Bar dataKey="count" fill="#3b82f6" />
@@ -257,10 +258,17 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
-                  }} 
+                    backgroundColor: "#ffffff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`${name}: ${value}`}</span>,
+                      null
+                    ];
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -298,10 +306,17 @@ export default function Dashboard() {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
-                  }} 
+                    backgroundColor: "#ffffff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`${name}: ${value}`}</span>,
+                      null
+                    ];
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -329,9 +344,10 @@ export default function Dashboard() {
                 <YAxis stroke="#9ca3af" />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
+                    backgroundColor: "#ffffff", 
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    color: "#000000"
                   }} 
                 />
                 <Bar dataKey="count" fill="#3b82f6" />
