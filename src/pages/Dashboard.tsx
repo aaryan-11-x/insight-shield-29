@@ -113,7 +113,7 @@ export default function Dashboard() {
       
       return data?.map(item => ({
         name: item.assets_type,
-        value: item.asset_count,
+        value: item.count,
         color: item.assets_type.includes("Vulnerable") ? "#dc2626" : "#16a34a"
       }));
     }
