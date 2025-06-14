@@ -10,6 +10,7 @@ interface MTTMSeverityData {
   risk_severity: string;
   vulnerability_count: number;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function MTTMSeverity() {
@@ -17,10 +18,12 @@ export default function MTTMSeverity() {
     queryKey: ['mttm-severity'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('mttm_by_severity')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('average_mttm_days', { ascending: false });
       
       if (error) {

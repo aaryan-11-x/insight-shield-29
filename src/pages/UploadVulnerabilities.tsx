@@ -8,6 +8,7 @@ import { Upload, FileSpreadsheet, CheckCircle, ArrowLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AnalysisResponse {
   status: 'success' | 'error';
@@ -74,6 +75,7 @@ export default function UploadVulnerabilities() {
       
       // Get instance ID from localStorage
       const instanceId = localStorage.getItem('currentInstanceId');
+      
       if (!instanceId) {
         toast({
           variant: "destructive",
@@ -83,6 +85,43 @@ export default function UploadVulnerabilities() {
         });
         return;
       }
+
+      // Create a new run first
+      const { data: runData, error: runError } = await supabase
+        .from('runs')
+        .insert([
+          {
+            instance_id: instanceId,
+            status: 'active',
+            scan_date: new Date().toISOString()
+          }
+        ])
+        .select();
+
+      if (runError) {
+        console.error('Error creating run:', runError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create run. Please try again.",
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      // Store the run ID
+      if (!runData || !runData[0]) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create run. Please try again.",
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      const runId = runData[0].run_id;
+      localStorage.setItem('currentRunId', runId);
       
       // Create a promise to handle the XHR request
       const uploadPromise = new Promise<AnalysisResponse>((resolve, reject) => {
@@ -147,8 +186,9 @@ export default function UploadVulnerabilities() {
       });
 
       xhr.open('POST', 'http://localhost:8000/api/v1/analyze');
-      // Add the instance ID header
+      // Add the instance ID and run ID headers
       xhr.setRequestHeader('X-Current-Instance-Id', instanceId);
+      xhr.setRequestHeader('X-Current-Run-Id', runId);
       xhr.send(formData);
 
       const result = await uploadPromise;

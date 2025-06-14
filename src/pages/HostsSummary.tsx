@@ -1,7 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
+import { useState } from "react";
 
 interface HostData {
   host: string;
@@ -11,18 +13,25 @@ interface HostData {
   low: number;
   vulnerabilities_with_cve: number;
   vulnerability_count: number;
-  instance_id: string;
+  instance_id: UUID;
+  run_id: string;
 }
 
+const ITEMS_PER_PAGE = 100;
+
 export default function HostsSummary() {
+  const [currentPage, setCurrentPage] = useState(1);
+  
   const { data: hostData, isLoading, error } = useQuery({
     queryKey: ['host-summary'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('host_summary')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('vulnerability_count', { ascending: false });
       
       if (error) {
@@ -40,6 +49,13 @@ export default function HostsSummary() {
     totalVulnerabilities: hostData?.reduce((sum, host) => sum + host.vulnerability_count, 0) || 0,
     totalVulnerabilitiesWithCVE: hostData?.reduce((sum, host) => sum + host.vulnerabilities_with_cve, 0) || 0
   };
+
+  // Pagination
+  const totalPages = hostData ? Math.ceil(hostData.length / ITEMS_PER_PAGE) : 0;
+  const paginatedData = hostData?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   if (isLoading) {
     return (
@@ -133,7 +149,7 @@ export default function HostsSummary() {
               </tr>
             </thead>
             <tbody>
-              {hostData?.map((item, index) => (
+              {paginatedData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono text-sm">{item.host}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.vulnerability_count}</td>
@@ -146,6 +162,31 @@ export default function HostsSummary() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, hostData?.length || 0)} of {hostData?.length || 0} entries
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

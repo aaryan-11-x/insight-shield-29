@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { Server, Shield, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Server, Shield, AlertTriangle, ArrowLeft, Upload } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,18 +16,35 @@ interface Instance {
   description: string;
   status: string;
   created_at: string;
+  runs?: Run[];
+}
+
+interface Run {
+  id: number;
+  run_id: string;
+  scan_date: string;
+  status: string;
 }
 
 export default function SelectInstance() {
   const navigate = useNavigate();
   const [selectedInstance, setSelectedInstance] = useState<string>("");
+  const [selectedRun, setSelectedRun] = useState<string>("");
 
   const { data: instances, isLoading } = useQuery({
     queryKey: ['instances'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('instances')
-        .select('*')
+        .select(`
+          *,
+          runs (
+            id,
+            run_id,
+            scan_date,
+            status
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -40,11 +57,17 @@ export default function SelectInstance() {
   });
 
   const handleSelect = () => {
-    if (selectedInstance) {
-      // Store the selected instance ID in localStorage
+    if (selectedInstance && selectedRun) {
+      // Store both IDs in localStorage
       localStorage.setItem('currentInstanceId', selectedInstance);
+      localStorage.setItem('currentRunId', selectedRun);
       navigate("/dashboard");
     }
+  };
+
+  const handleUploadNewRun = (instanceId: string) => {
+    localStorage.setItem('currentInstanceId', instanceId);
+    navigate("/upload-vulnerabilities");
   };
 
   const handleBack = () => {
@@ -93,57 +116,72 @@ export default function SelectInstance() {
           <CardHeader>
             <CardTitle className="text-2xl font-bold">Select Instance</CardTitle>
             <CardDescription>
-              Choose the environment instance you want to analyze
+              Choose the environment instance and run you want to analyze
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RadioGroup 
-              value={selectedInstance} 
-              onValueChange={(value) => {
-                setSelectedInstance(value);
-                localStorage.setItem('currentInstanceId', value);
-              }}
-            >
-              <div className="grid gap-4">
+            <div className="space-y-6">
                 {instances?.map((instance) => (
-                  <div key={instance.id} className="relative">
-                    <RadioGroupItem 
-                      value={instance.instance_id} 
-                      id={instance.instance_id}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={instance.instance_id}
-                      className="flex cursor-pointer rounded-lg border-2 border-muted p-4 hover:bg-accent peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <div className="flex items-start gap-4 w-full">
+                <div key={instance.id} className="border rounded-lg p-4">
+                  <div className="flex items-start gap-4">
                         <div className="mt-1">
                           {getRiskIcon(instance.status)}
                         </div>
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold">{instance.name}</h3>
                             <Badge variant={instance.status === "active" ? "default" : "secondary"}>
                               {instance.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">{instance.description}</p>
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-muted-foreground">
-                              Created: {new Date(instance.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
+                      <p className="text-sm text-muted-foreground mb-4">{instance.description}</p>
+                      
+                      {/* Runs */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium">Available Runs</h4>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleUploadNewRun(instance.instance_id)}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload New Run
+                          </Button>
                         </div>
+                        <RadioGroup
+                          value={selectedRun}
+                          onValueChange={(runId) => {
+                            setSelectedRun(runId);
+                            setSelectedInstance(instance.instance_id);
+                          }}
+                          className="space-y-2"
+                        >
+                          {instance.runs?.map((run) => (
+                            <div key={run.id} className="flex items-center space-x-2">
+                              <RadioGroupItem
+                                value={run.run_id}
+                                id={run.run_id}
+                              />
+                              <Label
+                                htmlFor={run.run_id}
+                                className="text-sm"
+                              >
+                                Run from {new Date(run.scan_date).toLocaleString()}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
                       </div>
-                    </Label>
+                    </div>
+                  </div>
                   </div>
                 ))}
               </div>
-            </RadioGroup>
 
             <Button 
               onClick={handleSelect}
-              disabled={!selectedInstance}
+              disabled={!selectedInstance || !selectedRun}
               className="w-full mt-6"
             >
               Continue to Dashboard

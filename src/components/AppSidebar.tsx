@@ -172,6 +172,9 @@ export function AppSidebar() {
   };
 
   const handleLogoutConfirm = () => {
+    // Clear instance and run IDs from localStorage
+    localStorage.removeItem('currentInstanceId');
+    localStorage.removeItem('currentRunId');
     setShowLogoutDialog(false);
     navigate("/login");
   };

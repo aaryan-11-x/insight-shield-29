@@ -1,4 +1,3 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ interface RemediationData {
   percentage: number | null;
   remediation: string;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function Remediation() {
@@ -18,10 +18,12 @@ export default function Remediation() {
     queryKey: ['remediation'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('remediation_insights')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('observations_impacted', { ascending: false });
       
       if (error) {

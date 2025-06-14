@@ -9,10 +9,12 @@ export default function EOLSummary() {
     queryKey: ['eol-components'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_components')
         .select('*')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
       
       if (error) {
         console.error('Error fetching EOL components data:', error);
@@ -28,10 +30,12 @@ export default function EOLSummary() {
     queryKey: ['eol-ip'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_ip')
         .select('*')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
       
       if (error) {
         console.error('Error fetching EOL IP data:', error);

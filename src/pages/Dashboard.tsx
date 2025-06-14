@@ -11,10 +11,12 @@ export default function Dashboard() {
     queryKey: ['cve-summary'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('cve_summary')
         .select('cve, count')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('count', { ascending: false })
         .limit(10);
       
@@ -28,10 +30,12 @@ export default function Dashboard() {
     queryKey: ['host-summary'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('host_summary')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('vulnerability_count', { ascending: false })
         .order('vulnerabilities_with_cve', { ascending: false })
         .limit(10);
@@ -46,10 +50,12 @@ export default function Dashboard() {
     queryKey: ['vulnerability-clustering'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('vulnerability_clustering')
         .select('product_service, total_vulnerabilities')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('total_vulnerabilities', { ascending: false })
         .limit(8);
       
@@ -67,10 +73,12 @@ export default function Dashboard() {
     queryKey: ['aging-data'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('ageing_of_vulnerability')
         .select('days_after_discovery')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
       
       if (error) throw error;
       
@@ -104,10 +112,12 @@ export default function Dashboard() {
     queryKey: ['unique-assets'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('unique_assets')
         .select('*')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
       
       if (error) throw error;
       
@@ -124,10 +134,12 @@ export default function Dashboard() {
     queryKey: ['risk-summary'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('risk_summary')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('count', { ascending: false });
       
       if (error) throw error;
@@ -140,6 +152,7 @@ export default function Dashboard() {
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const [
         { data: totalVulns },
         { data: exploitabilityData },
@@ -147,11 +160,11 @@ export default function Dashboard() {
         { data: eolData },
         { data: remediationData }
       ] = await Promise.all([
-        supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }).eq('instance_id', instanceId),
-        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 7).eq('instance_id', instanceId),
-        supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true).eq('instance_id', instanceId),
-        supabase.from('eol_components').select('name', { count: 'exact' }).eq('instance_id', instanceId),
-        supabase.from('remediation_insights').select('id', { count: 'exact' }).eq('instance_id', instanceId)
+        supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId),
+        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 7).eq('instance_id', instanceId).eq('run_id', runId),
+        supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true).eq('instance_id', instanceId).eq('run_id', runId),
+        supabase.from('eol_components').select('name', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId),
+        supabase.from('remediation_insights').select('id', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId)
       ]);
 
       return {
@@ -230,9 +243,15 @@ export default function Dashboard() {
                     border: "1px solid #e5e7eb",
                     borderRadius: "8px",
                     color: "#000000"
-                  }} 
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`Count: ${value}`}</span>,
+                      null
+                    ];
+                  }}
                 />
-                <Bar dataKey="count" fill="#3b82f6" />
+                <Bar dataKey="count" name="Count" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -348,9 +367,15 @@ export default function Dashboard() {
                     border: "1px solid #e5e7eb",
                     borderRadius: "8px",
                     color: "#000000"
-                  }} 
+                  }}
+                  formatter={(value, name) => {
+                    return [
+                      <span style={{ color: "#000000" }}>{`Count: ${value}`}</span>,
+                      null
+                    ];
+                  }}
                 />
-                <Bar dataKey="count" fill="#3b82f6" />
+                <Bar dataKey="count" name="Count" fill="#3b82f6" />
               </BarChart>
             </ResponsiveContainer>
           </div>

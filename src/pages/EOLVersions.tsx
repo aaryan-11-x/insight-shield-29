@@ -10,6 +10,7 @@ interface EOLVersionData {
   software_type: string;
   version: string;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function EOLVersions() {
@@ -17,10 +18,12 @@ export default function EOLVersions() {
     queryKey: ['eol-versions'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_versions')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('instance_count', { ascending: false });
       
       if (error) {

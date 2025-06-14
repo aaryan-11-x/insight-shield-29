@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
@@ -16,6 +15,7 @@ interface PatchDetailsData {
   tags: string | null;
   url: string | null;
   instance_id: UUID;
+  run_id: string;
 }
 
 interface PatchAvailabilityData {
@@ -25,6 +25,7 @@ interface PatchAvailabilityData {
   vulnerabilities_with_patch_not_available: number;
   total_patches_to_be_applied: number;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function PatchDetails() {
@@ -32,10 +33,12 @@ export default function PatchDetails() {
     queryKey: ['patch-details'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('patch_details')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('id');
       
       if (error) {
@@ -51,10 +54,12 @@ export default function PatchDetails() {
     queryKey: ['patch-availability'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('patch_availability')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('risk_severity');
       
       if (error) {

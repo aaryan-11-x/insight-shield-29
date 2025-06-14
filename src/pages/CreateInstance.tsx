@@ -22,7 +22,7 @@ export default function CreateInstance() {
         const instanceId = uuidv4() as `${string}-${string}-${string}-${string}-${string}`;
         
         // Store in Supabase
-        const { data, error } = await supabase
+        const { data: instanceData, error: instanceError } = await supabase
           .from('instances')
           .insert([
             {
@@ -34,11 +34,11 @@ export default function CreateInstance() {
           ])
           .select();
 
-        if (error) throw error;
+        if (instanceError) throw instanceError;
 
-        // Store the instance ID in localStorage
-        if (data && data[0]) {
-          localStorage.setItem('currentInstanceId', data[0].instance_id);
+        // Store instance ID in localStorage
+        if (instanceData && instanceData[0]) {
+          localStorage.setItem('currentInstanceId', instanceData[0].instance_id);
         }
         
         navigate("/upload-vulnerabilities");

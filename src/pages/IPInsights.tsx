@@ -1,9 +1,9 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { UUID } from "crypto";
 
 interface IPInsightsData {
   ip_address: string;
@@ -17,7 +17,8 @@ interface IPInsightsData {
   kev_count: number;
   last_scan_date: string | null;
   most_common_category: string | null;
-  instance_id: string;
+  instance_id: UUID;
+  run_id: string;
 }
 
 export default function IPInsights() {
@@ -25,10 +26,12 @@ export default function IPInsights() {
     queryKey: ['ip-insights'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('ip_insights')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('total_vulnerabilities', { ascending: false });
       
       if (error) {

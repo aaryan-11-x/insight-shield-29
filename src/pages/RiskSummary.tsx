@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface RiskSummaryData {
   count: number;
-  created_at: string;
   severity: string;
   vulnerabilities_with_cve: number;
-  instance_id: string;
+  instance_id: UUID;
+  run_id: string;
 }
 
 interface CVEData {
@@ -21,6 +22,8 @@ interface CVEData {
   description: string | null;
   hosts: string | null;
   solutions: string | null;
+  instance_id: UUID;
+  run_id: string;
 }
 
 interface HostData {
@@ -31,6 +34,8 @@ interface HostData {
   high: number;
   medium: number;
   low: number;
+  instance_id: UUID;
+  run_id: string;
 }
 
 export default function RiskSummary() {
@@ -38,11 +43,13 @@ export default function RiskSummary() {
     queryKey: ['risk-summary'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('risk_summary')
         .select('*')
         .eq('instance_id', instanceId)
-        .order('created_at', { ascending: false });
+        .eq('run_id', runId)
+        // .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching risk summary data:', error);
@@ -56,9 +63,13 @@ export default function RiskSummary() {
   const { data: cveData, isLoading: cveLoading } = useQuery({
     queryKey: ['top-cves'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('cve_summary')
         .select('*')
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('count', { ascending: false })
         .limit(10);
       
@@ -74,9 +85,13 @@ export default function RiskSummary() {
   const { data: hostData, isLoading: hostLoading } = useQuery({
     queryKey: ['top-hosts'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('host_summary')
         .select('*')
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('vulnerability_count', { ascending: false })
         .order('vulnerabilities_with_cve', { ascending: false })
         .limit(10);
@@ -129,7 +144,7 @@ export default function RiskSummary() {
           </div>
           <Button className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            Download Report
+            Download Sheet
           </Button>
         </div>
         <div className="flex items-center justify-center py-8">
@@ -148,7 +163,7 @@ export default function RiskSummary() {
         </div>
         <Button className="flex items-center gap-2">
           <Download className="h-4 w-4" />
-          Download Report
+          Download Sheet
         </Button>
       </div>
 

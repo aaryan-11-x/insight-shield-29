@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +10,7 @@ interface RemediationUniqueData {
   unique_vulnerability: string;
   risk_rating: string;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function RemediationUnique() {
@@ -18,10 +18,12 @@ export default function RemediationUnique() {
     queryKey: ['remediation-unique'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('remediation_to_unique_vulnerabilities')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('id');
       
       if (error) {

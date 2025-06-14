@@ -3,9 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 interface CVEData {
   instance_id: UUID;
+  run_id: string;
   cve: string;
   count: number | null;
   severity: string | null;
@@ -15,15 +19,21 @@ interface CVEData {
   solutions: string | null;
 }
 
+const ITEMS_PER_PAGE = 100;
+
 export default function CVESummary() {
+  const [currentPage, setCurrentPage] = useState(1);
+  
   const { data: cveData, isLoading, error } = useQuery({
     queryKey: ['cve-summary'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('cve_summary')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('count', { ascending: false });
       
       if (error) {
@@ -43,6 +53,13 @@ export default function CVESummary() {
     medium: cveData?.filter(item => item.severity === "Medium").length || 0,
     low: cveData?.filter(item => item.severity === "Low" || item.severity === "Low/None").length || 0,
   };
+
+  // Pagination
+  const totalPages = cveData ? Math.ceil(cveData.length / ITEMS_PER_PAGE) : 0;
+  const paginatedData = cveData?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   if (isLoading) {
     return (
@@ -139,7 +156,7 @@ export default function CVESummary() {
               </tr>
             </thead>
             <tbody>
-              {cveData?.map((item, index) => (
+              {paginatedData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4">
                     <code className="text-sm font-mono bg-background px-2 py-1 rounded">{item.cve}</code>
@@ -168,6 +185,31 @@ export default function CVESummary() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, cveData?.length || 0)} of {cveData?.length || 0} entries
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

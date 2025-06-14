@@ -1,4 +1,3 @@
-
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +10,7 @@ interface EOLIPData {
   risk_level: string;
   seol_component_count: number;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function EOLIPs() {
@@ -18,10 +18,12 @@ export default function EOLIPs() {
     queryKey: ['eol-ips'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_ip')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('seol_component_count', { ascending: false });
       
       if (error) {

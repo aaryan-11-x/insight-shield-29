@@ -17,13 +17,13 @@ interface EOLComponentData {
   plugin_id: number;
   risk: string;
   instance_id: UUID;
+  run_id: string;
 }
 
-interface EOLSummary {
-  total_unique_components: number;
-  total_count: number;
-  hosts_with_eol_components: number;
-  software_types_affected: number;
+interface EOLIPData {
+  seol_component_count: number;
+  instance_id: string;
+  run_id: string;
 }
 
 const ITEMS_PER_PAGE = 100;
@@ -35,10 +35,12 @@ export default function EOLComponents() {
     queryKey: ['eol-components'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_components')
         .select('plugin_id, name, risk, eol_duration_days, cve')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('eol_duration_days', { ascending: false });
       
       if (error) {
@@ -52,23 +54,26 @@ export default function EOLComponents() {
     gcTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
   });
 
-  const { data: eolSummary, isLoading: summaryLoading } = useQuery({
-    queryKey: ['eol-summary'],
+  const { data: eolIPData, isLoading: ipLoading } = useQuery({
+    queryKey: ['eol-ip-data'],
     queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
-        .from('eol_summary')
-        .select('*')
-        .single();
+        .from('eol_ip')
+        .select('seol_component_count')
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
       
       if (error) {
-        console.error('Error fetching EOL summary:', error);
+        console.error('Error fetching EOL IP data:', error);
         throw error;
       }
       
-      return data as EOLSummary;
+      return data as EOLIPData[];
     },
-    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
-    gcTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   // Map risk → numeric value
@@ -97,7 +102,10 @@ export default function EOLComponents() {
     item.eol_duration_days === null || item.eol_duration_days === undefined
   ).length || 0;
 
-  if (isLoading || summaryLoading) {
+  // Calculate total SEoL instances across all hosts
+  const totalSEoLInstances = eolIPData?.reduce((sum, item) => sum + item.seol_component_count, 0) || 0;
+
+  if (isLoading || ipLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -246,12 +254,12 @@ export default function EOLComponents() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <SimpleMetricCard
           title="Total Unique SEoL Components"
-          value={eolSummary?.total_unique_components || 0}
+          value={eolData?.length || 0}
           color="red"
         />
         <SimpleMetricCard
           title="Total SEoL Instances (across all hosts)"
-          value={eolSummary?.total_count || 0}
+          value={totalSEoLInstances}
           color="blue"
         />
         <SimpleMetricCard

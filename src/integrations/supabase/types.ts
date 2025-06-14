@@ -1,8 +1,11 @@
+import { UUID } from "crypto"
+
 export type Json =
   | string
   | number
   | boolean
   | null
+  | UUID
   | { [key: string]: Json | undefined }
   | Json[]
 
@@ -17,6 +20,7 @@ export type Database = {
           host: string
           id: number
           instance_id: string
+          run_id: string
           name: string
           plugin_id: number
           risk: string
@@ -28,6 +32,7 @@ export type Database = {
           host: string
           id?: number
           instance_id: string
+          run_id: string
           name: string
           plugin_id: number
           risk: string
@@ -39,6 +44,7 @@ export type Database = {
           host?: string
           id?: number
           instance_id?: string
+          run_id?: string
           name?: string
           plugin_id?: number
           risk?: string
@@ -51,6 +57,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "ageing_of_vulnerability_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       cve_summary: {
@@ -60,6 +73,7 @@ export type Database = {
           description: string | null
           hosts: string | null
           instance_id: string
+          run_id: string
           name: string | null
           severity: string | null
           solutions: string | null
@@ -70,6 +84,7 @@ export type Database = {
           description?: string | null
           hosts?: string | null
           instance_id: string
+          run_id: string
           name?: string | null
           severity?: string | null
           solutions?: string | null
@@ -80,6 +95,7 @@ export type Database = {
           description?: string | null
           hosts?: string | null
           instance_id?: string
+          run_id?: string
           name?: string | null
           severity?: string | null
           solutions?: string | null
@@ -92,6 +108,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "cve_summary_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       eol_components: {
@@ -100,6 +123,7 @@ export type Database = {
           cve: string | null
           eol_duration_days: number | null
           instance_id: string
+          run_id: string
           name: string
           plugin_id: number
           risk: string
@@ -109,6 +133,7 @@ export type Database = {
           cve?: string | null
           eol_duration_days?: number | null
           instance_id: string
+          run_id: string
           name: string
           plugin_id: number
           risk: string
@@ -118,6 +143,7 @@ export type Database = {
           cve?: string | null
           eol_duration_days?: number | null
           instance_id?: string
+          run_id?: string
           name?: string
           plugin_id?: number
           risk?: string
@@ -130,23 +156,33 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "eol_components_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       eol_ip: {
         Row: {
           instance_id: string
+          run_id: string
           ip_address: unknown
           risk_level: string
           seol_component_count: number
         }
         Insert: {
           instance_id: string
+          run_id: string
           ip_address: unknown
           risk_level: string
           seol_component_count: number
         }
         Update: {
           instance_id?: string
+          run_id?: string
           ip_address?: unknown
           risk_level?: string
           seol_component_count?: number
@@ -159,6 +195,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "eol_ip_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       eol_summary: {
@@ -174,6 +217,7 @@ export type Database = {
           hosts_with_eol_components: number
           id: number
           instance_id: string
+          run_id: string
           low_count: number
           low_pct: number
           medium_count: number
@@ -197,6 +241,7 @@ export type Database = {
           hosts_with_eol_components: number
           id?: never
           instance_id: string
+          run_id: string
           low_count: number
           low_pct: number
           medium_count: number
@@ -220,6 +265,7 @@ export type Database = {
           hosts_with_eol_components?: number
           id?: never
           instance_id?: string
+          run_id?: string
           low_count?: number
           low_pct?: number
           medium_count?: number
@@ -239,24 +285,34 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "eol_summary_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       eol_versions: {
         Row: {
           instance_count: number
           instance_id: string
+          run_id: string
           software_type: string
           version: string
         }
         Insert: {
           instance_count: number
           instance_id: string
+          run_id: string
           software_type: string
           version: string
         }
         Update: {
           instance_count?: number
           instance_id?: string
+          run_id?: string
           software_type?: string
           version?: string
         }
@@ -268,6 +324,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "eol_versions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       exploitability_scoring: {
@@ -282,6 +345,7 @@ export type Database = {
           host: string
           id: number
           instance_id: string
+          run_id: string
           kev_listed: boolean | null
           name: string | null
           plugin_id: number
@@ -301,6 +365,7 @@ export type Database = {
           host: string
           id?: number
           instance_id: string
+          run_id: string
           kev_listed?: boolean | null
           name?: string | null
           plugin_id: number
@@ -320,6 +385,7 @@ export type Database = {
           host?: string
           id?: number
           instance_id?: string
+          run_id?: string
           kev_listed?: boolean | null
           name?: string | null
           plugin_id?: number
@@ -336,6 +402,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "exploitability_scoring_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       host_summary: {
@@ -344,6 +417,7 @@ export type Database = {
           high: number
           host: string
           instance_id: string
+          run_id: string
           low: number
           medium: number
           vulnerabilities_with_cve: number
@@ -354,6 +428,7 @@ export type Database = {
           high: number
           host: string
           instance_id: string
+          run_id: string
           low: number
           medium: number
           vulnerabilities_with_cve: number
@@ -364,6 +439,7 @@ export type Database = {
           high?: number
           host?: string
           instance_id?: string
+          run_id?: string
           low?: number
           medium?: number
           vulnerabilities_with_cve?: number
@@ -377,6 +453,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "host_summary_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       instances: {
@@ -413,6 +496,7 @@ export type Database = {
           high: number
           hostname: string | null
           instance_id: string
+          run_id: string
           ip_address: unknown
           kev_count: number
           last_scan_date: string | null
@@ -427,6 +511,7 @@ export type Database = {
           high: number
           hostname?: string | null
           instance_id: string
+          run_id: string
           ip_address: unknown
           kev_count: number
           last_scan_date?: string | null
@@ -441,6 +526,7 @@ export type Database = {
           high?: number
           hostname?: string | null
           instance_id?: string
+          run_id?: string
           ip_address?: unknown
           kev_count?: number
           last_scan_date?: string | null
@@ -457,6 +543,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "ip_insights_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       most_exploitable: {
@@ -467,6 +560,7 @@ export type Database = {
           host: string
           id: number
           instance_id: string
+          run_id: string
           low_count: number
           medium_count: number
           total_vulnerabilities: number
@@ -478,6 +572,7 @@ export type Database = {
           host: string
           id?: number
           instance_id: string
+          run_id: string
           low_count: number
           medium_count: number
           total_vulnerabilities: number
@@ -489,6 +584,7 @@ export type Database = {
           host?: string
           id?: number
           instance_id?: string
+          run_id?: string
           low_count?: number
           medium_count?: number
           total_vulnerabilities?: number
@@ -501,6 +597,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "most_exploitable_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       mttm_by_severity: {
@@ -508,6 +611,7 @@ export type Database = {
           average_mttm_days: number
           id: number
           instance_id: string
+          run_id: string
           risk_severity: string
           vulnerability_count: number
         }
@@ -515,6 +619,7 @@ export type Database = {
           average_mttm_days: number
           id?: number
           instance_id: string
+          run_id: string
           risk_severity: string
           vulnerability_count: number
         }
@@ -522,6 +627,7 @@ export type Database = {
           average_mttm_days?: number
           id?: number
           instance_id?: string
+          run_id?: string
           risk_severity?: string
           vulnerability_count?: number
         }
@@ -533,12 +639,20 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "mttm_by_severity_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       patch_availability: {
         Row: {
           id: number
           instance_id: string
+          run_id: string
           risk_severity: string
           total_patches_to_be_applied: number
           vulnerabilities_with_patch_available: number
@@ -547,6 +661,7 @@ export type Database = {
         Insert: {
           id?: number
           instance_id: string
+          run_id: string
           risk_severity: string
           total_patches_to_be_applied: number
           vulnerabilities_with_patch_available: number
@@ -555,6 +670,7 @@ export type Database = {
         Update: {
           id?: number
           instance_id?: string
+          run_id?: string
           risk_severity?: string
           total_patches_to_be_applied?: number
           vulnerabilities_with_patch_available?: number
@@ -568,6 +684,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "patch_availability_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       patch_details: {
@@ -575,6 +698,7 @@ export type Database = {
           cve: string
           id: number
           instance_id: string
+          run_id: string
           patch_status: string
           source: string | null
           tags: string | null
@@ -584,6 +708,7 @@ export type Database = {
           cve: string
           id?: number
           instance_id: string
+          run_id: string
           patch_status: string
           source?: string | null
           tags?: string | null
@@ -593,6 +718,7 @@ export type Database = {
           cve?: string
           id?: number
           instance_id?: string
+          run_id?: string
           patch_status?: string
           source?: string | null
           tags?: string | null
@@ -606,6 +732,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "patch_details_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       prioritization_insights: {
@@ -614,6 +747,7 @@ export type Database = {
           high_count: number
           id: number
           instance_id: string
+          run_id: string
           low_count: number
           medium_count: number
           metric: string
@@ -623,6 +757,7 @@ export type Database = {
           high_count: number
           id?: number
           instance_id: string
+          run_id: string
           low_count: number
           medium_count: number
           metric: string
@@ -632,6 +767,7 @@ export type Database = {
           high_count?: number
           id?: number
           instance_id?: string
+          run_id?: string
           low_count?: number
           medium_count?: number
           metric?: string
@@ -644,12 +780,20 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "prioritization_insights_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       remediation_insights: {
         Row: {
           id: number
           instance_id: string
+          run_id: string
           observations_impacted: number
           percentage: number | null
           remediation: string
@@ -657,6 +801,7 @@ export type Database = {
         Insert: {
           id?: number
           instance_id: string
+          run_id: string
           observations_impacted: number
           percentage?: number | null
           remediation: string
@@ -664,6 +809,7 @@ export type Database = {
         Update: {
           id?: number
           instance_id?: string
+          run_id?: string
           observations_impacted?: number
           percentage?: number | null
           remediation?: string
@@ -676,12 +822,20 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "remediation_insights_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       remediation_to_unique_vulnerabilities: {
         Row: {
           id: number
           instance_id: string
+          run_id: string
           remediation: string
           risk_rating: string
           unique_vulnerability: string
@@ -689,6 +843,7 @@ export type Database = {
         Insert: {
           id?: number
           instance_id: string
+          run_id: string
           remediation: string
           risk_rating: string
           unique_vulnerability: string
@@ -696,6 +851,7 @@ export type Database = {
         Update: {
           id?: number
           instance_id?: string
+          run_id?: string
           remediation?: string
           risk_rating?: string
           unique_vulnerability?: string
@@ -708,27 +864,34 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "remediation_to_unique_vulnerabilities_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       risk_summary: {
         Row: {
           count: number
-          created_at: string
           instance_id: string
+          run_id: string
           severity: string
           vulnerabilities_with_cve: number
         }
         Insert: {
           count: number
-          created_at?: string
           instance_id: string
+          run_id: string
           severity: string
           vulnerabilities_with_cve: number
         }
         Update: {
           count?: number
-          created_at?: string
           instance_id?: string
+          run_id?: string
           severity?: string
           vulnerabilities_with_cve?: number
         }
@@ -740,26 +903,36 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "risk_summary_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       unique_assets: {
         Row: {
-          asset_count: number
+          count: number
           assets_type: string
           id: number
           instance_id: string
+          run_id: string
         }
         Insert: {
-          asset_count: number
+          count: number
           assets_type: string
           id?: number
           instance_id: string
+          run_id: string
         }
         Update: {
-          asset_count?: number
+          count?: number
           assets_type?: string
           id?: number
           instance_id?: string
+          run_id?: string
         }
         Relationships: [
           {
@@ -769,6 +942,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "unique_assets_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       unique_vulnerabilities: {
@@ -779,6 +959,7 @@ export type Database = {
           epss_score: string | null
           instance_count: number
           instance_id: string
+          run_id: string
           kev_listed: boolean
           remediation: string | null
           severity: string
@@ -791,6 +972,7 @@ export type Database = {
           epss_score?: string | null
           instance_count: number
           instance_id: string
+          run_id: string
           kev_listed: boolean
           remediation?: string | null
           severity: string
@@ -803,6 +985,7 @@ export type Database = {
           epss_score?: string | null
           instance_count?: number
           instance_id?: string
+          run_id?: string
           kev_listed?: boolean
           remediation?: string | null
           severity?: string
@@ -816,6 +999,13 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "unique_vulnerabilities_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
         ]
       }
       vulnerability_clustering: {
@@ -826,6 +1016,7 @@ export type Database = {
           cve_count: number
           high: number
           instance_id: string
+          run_id: string
           kev_count: number
           low: number
           medium: number
@@ -839,6 +1030,7 @@ export type Database = {
           cve_count: number
           high: number
           instance_id: string
+          run_id: string
           kev_count: number
           low: number
           medium: number
@@ -852,6 +1044,7 @@ export type Database = {
           cve_count?: number
           high?: number
           instance_id?: string
+          run_id?: string
           kev_count?: number
           low?: number
           medium?: number
@@ -866,6 +1059,47 @@ export type Database = {
             referencedRelation: "instances"
             referencedColumns: ["instance_id"]
           },
+          {
+            foreignKeyName: "vulnerability_clustering_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "runs"
+            referencedColumns: ["run_id"]
+          }
+        ]
+      }
+      runs: {
+        Row: {
+          id: number
+          run_id: string
+          instance_id: string
+          scan_date: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          run_id?: string
+          instance_id: string
+          scan_date?: string
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          run_id?: string
+          instance_id?: string
+          scan_date?: string
+          status?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "runs_instance_id_fkey"
+            columns: ["instance_id"]
+            referencedRelation: "instances"
+            referencedColumns: ["instance_id"]
+          }
         ]
       }
     }
@@ -888,106 +1122,106 @@ type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+  ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+    Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+    Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-    ? R
-    : never
+  ? R
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
+    DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] &
+    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+  ? R
+  : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
+    Insert: infer I
+  }
+  ? I
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Insert: infer I
+  }
+  ? I
+  : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+  | keyof DefaultSchema["Tables"]
+  | { schema: keyof Database },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+  ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+  : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
+    Update: infer U
+  }
+  ? U
+  : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+    Update: infer U
+  }
+  ? U
+  : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+  | keyof DefaultSchema["Enums"]
+  | { schema: keyof Database },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+  ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+  : never = never,
 > = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
   ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+  | keyof DefaultSchema["CompositeTypes"]
+  | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+  ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+  : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {

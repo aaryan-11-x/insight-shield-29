@@ -14,6 +14,8 @@ interface UniqueVulnerabilityData {
   affected_hosts: number;
   instance_count: number;
   remediation: string | null;
+  instance_id: string;
+  run_id: string;
 }
 
 export default function UniqueVulnerabilities() {
@@ -21,10 +23,12 @@ export default function UniqueVulnerabilities() {
     queryKey: ['unique-vulnerabilities'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('unique_vulnerabilities')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('cve', { ascending: true })
         .order('instance_count', { ascending: false });
       

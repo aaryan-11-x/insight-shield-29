@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { UUID } from "crypto";
 
 interface PrioritizationData {
   metric: string;
@@ -10,6 +11,8 @@ interface PrioritizationData {
   high_count: number;
   medium_count: number;
   low_count: number;
+  instance_id: UUID;
+  run_id: string;
 }
 
 const METRIC_ORDER = {
@@ -24,10 +27,13 @@ export default function Prioritization() {
     queryKey: ['prioritization-insights'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('prioritization_insights')
         .select('*')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
+
       
       if (error) {
         console.error('Error fetching prioritization data:', error);
