@@ -1,10 +1,11 @@
-
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Server, Monitor, Smartphone, Cloud, Download } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const assetsData = [
   {
@@ -79,6 +80,28 @@ export default function Assets() {
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  const { data: uniqueIPs, isLoading: isLoadingIPs } = useQuery({
+    queryKey: ['unique-ips'],
+    queryFn: async () => {
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const { data, error } = await supabase
+        .from('ageing_of_vulnerability')
+        .select('host')
+        .eq('instance_id', instanceId);
+      
+      if (error) {
+        console.error('Error fetching unique IPs:', error);
+        throw error;
+      }
+      
+      // Get unique IPs
+      const uniqueHosts = new Set(data.map(item => item.host));
+      return uniqueHosts.size;
+    },
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
+  });
+
   const filteredAssets = assetsData.filter(asset => {
     const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          asset.ip.includes(searchTerm) ||
@@ -89,7 +112,6 @@ export default function Assets() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const totalAssets = assetsData.length;
   const activeAssets = assetsData.filter(a => a.status === "active").length;
   const highRiskAssets = assetsData.filter(a => a.riskLevel === "high").length;
   const totalVulnerabilities = assetsData.reduce((sum, asset) => sum + asset.vulnerabilities, 0);
@@ -112,7 +134,13 @@ export default function Assets() {
         <div className="metric-card">
           <div className="space-y-2">
             <p className="text-sm font-medium text-muted-foreground">Total Assets</p>
-            <p className="text-2xl font-bold">{totalAssets}</p>
+            <p className="text-2xl font-bold">
+              {isLoadingIPs ? (
+                <span className="text-muted-foreground">Loading...</span>
+              ) : (
+                uniqueIPs
+              )}
+            </p>
           </div>
         </div>
         <div className="metric-card">

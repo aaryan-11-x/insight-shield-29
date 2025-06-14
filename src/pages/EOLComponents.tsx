@@ -5,6 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 interface EOLComponentData {
   created_at: string;
@@ -23,14 +26,18 @@ interface EOLSummary {
   software_types_affected: number;
 }
 
+const ITEMS_PER_PAGE = 100;
+
 export default function EOLComponents() {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { data: eolData, isLoading } = useQuery({
     queryKey: ['eol-components'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
       const { data, error } = await supabase
         .from('eol_components')
-        .select('*')
+        .select('plugin_id, name, risk, eol_duration_days, cve')
         .eq('instance_id', instanceId)
         .order('eol_duration_days', { ascending: false });
       
@@ -40,7 +47,9 @@ export default function EOLComponents() {
       }
       
       return data;
-    }
+    },
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
   });
 
   const { data: eolSummary, isLoading: summaryLoading } = useQuery({
@@ -57,7 +66,9 @@ export default function EOLComponents() {
       }
       
       return data as EOLSummary;
-    }
+    },
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
   });
 
   // Map risk → numeric value
@@ -66,6 +77,13 @@ export default function EOLComponents() {
     "High": 2,
     "Medium": 1
   };
+
+  // Pagination
+  const totalPages = eolData ? Math.ceil(eolData.length / ITEMS_PER_PAGE) : 0;
+  const paginatedData = eolData?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Prepare chart data
   const chartData = eolData?.map(item => ({
@@ -123,7 +141,7 @@ export default function EOLComponents() {
                 </tr>
               </thead>
               <tbody>
-                {eolData?.map((item, index) => (
+                {paginatedData?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-4 font-mono text-sm">{item.plugin_id}</td>
                     <td className="py-3 px-4 text-sm">{item.name}</td>
@@ -147,6 +165,31 @@ export default function EOLComponents() {
                 ))}
               </tbody>
             </table>
+          </div>
+          
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, eolData?.length || 0)} of {eolData?.length || 0} entries
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
