@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -6,43 +5,79 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Download, FileText, FileSpreadsheet } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 interface DownloadDropdownProps {
-  onDownloadPDF?: () => void;
-  onDownloadExcel?: () => void;
-  buttonText?: string;
+  onDownloadExcel: () => void;
+  onDownloadPDF: () => void;
+  buttonText: string;
 }
 
-export function DownloadDropdown({ onDownloadPDF, onDownloadExcel, buttonText = "Download Sheet" }: DownloadDropdownProps) {
-  const handleDownloadPDF = () => {
-    console.log("Downloading PDF report...");
-    if (onDownloadPDF) onDownloadPDF();
-  };
+export function DownloadDropdown({ onDownloadExcel, onDownloadPDF, buttonText }: DownloadDropdownProps) {
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDownloadExcel = () => {
-    console.log("Downloading Excel sheet...");
-    if (onDownloadExcel) onDownloadExcel();
+  const handleExcelDownload = async () => {
+    try {
+      setIsLoading(true);
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
+
+      if (!instanceId || !runId) {
+        throw new Error('Instance ID or Run ID not found');
+      }
+
+      const response = await fetch(`http://localhost:8000/api/v1/download/${instanceId}/${runId}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+
+      // Get the redirect URL from the response
+      const fileUrl = response.url;
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `vulnerability-report-${runId}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          {buttonText}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleDownloadExcel}>
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
-          Download Excel Sheet
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleDownloadPDF}>
-          <FileText className="h-4 w-4 mr-2" />
-          Download PDF
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center">
+      <Button 
+        onClick={handleExcelDownload}
+        disabled={isLoading}
+        className="flex items-center gap-2 rounded-r-none"
+      >
+        {isLoading ? 'Downloading...' : buttonText}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            className="h-10 px-2 rounded-l-none border-l-0"
+            disabled={isLoading}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={handleExcelDownload}>
+            Download Excel
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onDownloadPDF}>
+            Download PDF
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

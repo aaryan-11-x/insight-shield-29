@@ -67,7 +67,7 @@ export default function HostsSummary() {
           </div>
           <Button className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            Download Report
+            Download Sheet
           </Button>
         </div>
         <div className="flex items-center justify-center py-8">
@@ -87,7 +87,7 @@ export default function HostsSummary() {
           </div>
           <Button className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            Download Report
+            Download Sheet
           </Button>
         </div>
         <div className="flex items-center justify-center py-8">
@@ -106,7 +106,7 @@ export default function HostsSummary() {
         </div>
         <Button className="flex items-center gap-2">
           <Download className="h-4 w-4" />
-          Download Report
+          Download Sheet
         </Button>
       </div>
 

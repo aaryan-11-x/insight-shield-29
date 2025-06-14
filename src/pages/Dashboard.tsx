@@ -188,7 +188,11 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Vulnerability Visualization</h1>
           <p className="text-muted-foreground">Comprehensive security overview and threat assessment</p>
         </div>
-        <DownloadDropdown onDownloadExcel={handleDownloadReport} onDownloadPDF={handleDownloadReport} buttonText="Download Report" />
+        <DownloadDropdown 
+          onDownloadExcel={() => {}} 
+          onDownloadPDF={() => console.log("PDF download not implemented yet")} 
+          buttonText="Download Full Report" 
+        />
       </div>
 
       {/* Clickable Metrics Grid */}

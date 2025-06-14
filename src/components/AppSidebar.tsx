@@ -58,7 +58,7 @@ const menuItems = [
         url: "/dashboard/exploitability",
       },
       {
-        title: "Ageing of Vulnerability",
+        title: "Ageing of CVE",
         url: "/dashboard/vulnerability-aging",
       },
       {
