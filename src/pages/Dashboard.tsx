@@ -161,7 +161,7 @@ export default function Dashboard() {
         { data: remediationData }
       ] = await Promise.all([
         supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId),
-        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 7).eq('instance_id', instanceId).eq('run_id', runId),
+        supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 11).eq('instance_id', instanceId).eq('run_id', runId),
         supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true).eq('instance_id', instanceId).eq('run_id', runId),
         supabase.from('eol_components').select('name', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId),
         supabase.from('remediation_insights').select('id', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId)
@@ -204,7 +204,7 @@ export default function Dashboard() {
           href="/dashboard/vulnerability-aging"
         />
         <ClickableMetricCard
-          title="High Exploitability (≥7)"
+          title="Crticial Exploitability (≥11)"
           value={stats?.highExploitability || 0}
           color="critical"
           trend="up"
