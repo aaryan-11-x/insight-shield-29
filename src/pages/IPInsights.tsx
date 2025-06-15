@@ -5,9 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { UUID } from "crypto";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface IPInsightsData {
   ip_address: string;
@@ -25,8 +31,14 @@ interface IPInsightsData {
   run_id: string;
 }
 
+const ITEMS_PER_PAGE = 50;
+
 export default function IPInsights() {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isCriticalDialogOpen, setIsCriticalDialogOpen] = useState(false);
+  const [isHighDialogOpen, setIsHighDialogOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: ipData, isLoading } = useQuery({
@@ -73,6 +85,50 @@ export default function IPInsights() {
     { name: "Medium", value: ipData.reduce((sum, host) => sum + host.medium, 0), color: "#ca8a04" },
     { name: "Low", value: ipData.reduce((sum, host) => sum + host.low, 0), color: "#16a34a" },
   ] : [];
+
+  // Get hosts with critical vulnerabilities
+  const hostsWithCritical = ipData?.filter(host => host.critical > 0) || [];
+
+  // Get hosts with high vulnerabilities
+  const hostsWithHigh = ipData?.filter(host => host.high > 0) || [];
+
+  // Get unique categories
+  const categories = useMemo(() => {
+    if (!ipData) return [];
+    const uniqueCategories = new Set(ipData.map(host => host.most_common_category).filter(Boolean));
+    return Array.from(uniqueCategories).sort();
+  }, [ipData]);
+
+  // Filter and sort data based on selected category
+  const filteredAndSortedData = useMemo(() => {
+    if (!ipData) return [];
+    let filtered = ipData;
+    
+    if (selectedCategory) {
+      filtered = ipData.filter(host => host.most_common_category === selectedCategory);
+    }
+    
+    return filtered.sort((a, b) => {
+      // First sort by exploit score in descending order
+      if (b.exploitability_score !== a.exploitability_score) {
+        return b.exploitability_score - a.exploitability_score;
+      }
+      // If exploit scores are equal, sort by total vulnerabilities
+      return b.total_vulnerabilities - a.total_vulnerabilities;
+    });
+  }, [ipData, selectedCategory]);
+
+  // Update pagination for filtered data
+  const totalPages = Math.ceil((filteredAndSortedData?.length || 0) / ITEMS_PER_PAGE);
+  const paginatedData = filteredAndSortedData?.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  // Reset to first page when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
 
   const handleDownloadSheet = async () => {
     try {
@@ -199,7 +255,15 @@ export default function IPInsights() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-card p-6 rounded-lg border">
+        <div 
+          className="bg-card p-6 rounded-lg border cursor-pointer hover:bg-muted/20 transition-colors"
+          onClick={() => {
+            const tableElement = document.getElementById('ip-details-table');
+            if (tableElement) {
+              tableElement.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Hosts</p>
@@ -207,7 +271,15 @@ export default function IPInsights() {
             </div>
           </div>
         </div>
-        <div className="bg-card p-6 rounded-lg border">
+        <div 
+          className="bg-card p-6 rounded-lg border cursor-pointer hover:bg-muted/20 transition-colors"
+          onClick={() => {
+            const tableElement = document.getElementById('ip-details-table');
+            if (tableElement) {
+              tableElement.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Total Vulnerabilities</p>
@@ -229,11 +301,17 @@ export default function IPInsights() {
             <p className="text-sm text-muted-foreground">Hosts with Vulnerabilities</p>
             <p className="text-2xl font-bold">{stats.hostsWithVulnerabilities} <span className="text-sm text-muted-foreground">({stats.totalHosts > 0 ? ((stats.hostsWithVulnerabilities / stats.totalHosts) * 100).toFixed(1) : 0}%)</span></p>
           </div>
-          <div className="bg-background p-4 rounded border">
+          <div 
+            className="bg-background p-4 rounded border cursor-pointer hover:bg-muted/20 transition-colors"
+            onClick={() => setIsCriticalDialogOpen(true)}
+          >
             <p className="text-sm text-muted-foreground">Hosts with Critical Vulnerabilities</p>
             <p className="text-2xl font-bold">{stats.hostsWithCritical} <span className="text-sm text-muted-foreground">({stats.totalHosts > 0 ? ((stats.hostsWithCritical / stats.totalHosts) * 100).toFixed(1) : 0}%)</span></p>
           </div>
-          <div className="bg-background p-4 rounded border">
+          <div 
+            className="bg-background p-4 rounded border cursor-pointer hover:bg-muted/20 transition-colors"
+            onClick={() => setIsHighDialogOpen(true)}
+          >
             <p className="text-sm text-muted-foreground">Hosts with High Vulnerabilities</p>
             <p className="text-2xl font-bold">{stats.hostsWithHigh} <span className="text-sm text-muted-foreground">({stats.totalHosts > 0 ? ((stats.hostsWithHigh / stats.totalHosts) * 100).toFixed(1) : 0}%)</span></p>
           </div>
@@ -296,9 +374,127 @@ export default function IPInsights() {
         </div>
       </div>
 
+      {/* Critical Vulnerabilities Dialog */}
+      <Dialog open={isCriticalDialogOpen} onOpenChange={setIsCriticalDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Hosts with Critical Vulnerabilities</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">IP Address</th>
+                  <th className="text-center py-2 px-3 bg-muted">Critical</th>
+                  <th className="text-center py-2 px-3 bg-muted">Exploit Score</th>
+                  <th className="text-left py-2 px-3 bg-muted">Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hostsWithCritical.map((host, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3 font-mono text-xs">{String(host.ip_address)}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant="destructive">{host.critical}</Badge>
+                    </td>
+                    <td className="py-2 px-3 text-center font-mono">{host.exploitability_score}</td>
+                    <td className="py-2 px-3">{host.most_common_category || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* High Vulnerabilities Dialog */}
+      <Dialog open={isHighDialogOpen} onOpenChange={setIsHighDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Hosts with High Vulnerabilities</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">IP Address</th>
+                  <th className="text-center py-2 px-3 bg-muted">High</th>
+                  <th className="text-center py-2 px-3 bg-muted">Exploit Score</th>
+                  <th className="text-left py-2 px-3 bg-muted">Category</th>
+                </tr>
+              </thead>
+              <tbody>
+                {hostsWithHigh.map((host, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3 font-mono text-xs">{String(host.ip_address)}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant="default">{host.high}</Badge>
+                    </td>
+                    <td className="py-2 px-3 text-center font-mono">{host.exploitability_score}</td>
+                    <td className="py-2 px-3">{host.most_common_category || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* IP Details Table */}
-      <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">IP Address Details</h3>
+      <div className="chart-container" id="ip-details-table">
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-lg font-semibold">IP Address Details</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={selectedCategory === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory(null)}
+            >
+              All Categories
+            </Button>
+            <div className="relative group">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                Filter by Category
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <div className="absolute right-0 mt-2 w-48 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="py-1 max-h-60 overflow-y-auto">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-muted flex items-center justify-between ${
+                        selectedCategory === category ? 'bg-muted' : ''
+                      }`}
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      <span>{category}</span>
+                      {selectedCategory === category && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-primary"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -313,11 +509,10 @@ export default function IPInsights() {
                 <th className="text-center py-3 px-2">KEV</th>
                 <th className="text-center py-3 px-2">Exploit Score</th>
                 <th className="text-left py-3 px-2">Category</th>
-                <th className="text-left py-3 px-2">Last Scan</th>
               </tr>
             </thead>
             <tbody>
-              {ipData?.map((item, index) => (
+              {paginatedData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                   <td className="py-3 px-2 font-mono text-xs">{String(item.ip_address)}</td>
                   <td className="py-3 px-2">{item.hostname || "—"}</td>
@@ -337,11 +532,35 @@ export default function IPInsights() {
                   <td className="py-3 px-2 text-center">{item.kev_count}</td>
                   <td className="py-3 px-2 text-center font-mono">{item.exploitability_score}</td>
                   <td className="py-3 px-2">{item.most_common_category || "—"}</td>
-                  <td className="py-3 px-2 text-muted-foreground">{item.last_scan_date || "N/A"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredAndSortedData?.length || 0)} of {filteredAndSortedData?.length || 0} entries
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

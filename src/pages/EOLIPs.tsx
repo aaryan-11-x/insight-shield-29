@@ -5,9 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface EOLIPData {
   ip_address: unknown;
@@ -40,6 +46,10 @@ export default function EOLIPs() {
   });
 
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isOneComponentDialogOpen, setIsOneComponentDialogOpen] = useState(false);
+  const [isTwoToFiveDialogOpen, setIsTwoToFiveDialogOpen] = useState(false);
+  const [isMoreThanFiveDialogOpen, setIsMoreThanFiveDialogOpen] = useState(false);
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Calculate statistics
@@ -63,6 +73,19 @@ export default function EOLIPs() {
 
   // Get top 10 IPs for chart
   const topIPsForChart = eolIPData ? eolIPData.slice(0, 10) : [];
+
+  // Get filtered IPs for each category
+  const oneComponentIPs = eolIPData?.filter(ip => ip.seol_component_count === 1) || [];
+  const twoToFiveComponentIPs = eolIPData?.filter(ip => ip.seol_component_count >= 2 && ip.seol_component_count <= 5) || [];
+  const moreThanFiveComponentIPs = eolIPData?.filter(ip => ip.seol_component_count > 5) || [];
+
+  // Filter data based on selected risk level
+  const filteredIPData = useMemo(() => {
+    if (!eolIPData) return [];
+    if (!selectedRiskLevel) return eolIPData;
+    
+    return eolIPData.filter(ip => ip.risk_level === selectedRiskLevel);
+  }, [eolIPData, selectedRiskLevel]);
 
   const handleDownloadSheet = async () => {
     try {
@@ -192,35 +215,154 @@ export default function EOLIPs() {
         <h3 className="text-lg font-semibold mb-4">SEoL IP Statistics</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-3">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center p-2">
               <span className="text-sm text-muted-foreground">Total IPs with SEoL Components</span>
               <span className="font-bold">{stats.totalIPsWithSEoLComponents}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center p-2">
               <span className="text-sm text-muted-foreground">Average SEoL Components per IP</span>
               <span className="font-bold">{stats.averageSEoLComponentsPerIP}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center p-2">
               <span className="text-sm text-muted-foreground">Maximum SEoL Components on Single IP</span>
               <span className="font-bold">{stats.maximumSEoLComponentsOnSingleIP}</span>
             </div>
           </div>
           <div className="space-y-3">
-            <div className="flex justify-between">
+            <div 
+              className="flex justify-between items-center p-2 cursor-pointer hover:bg-muted/20 rounded-md transition-colors"
+              onClick={() => setIsOneComponentDialogOpen(true)}
+            >
               <span className="text-sm text-muted-foreground">IPs with 1 SEoL Component</span>
               <span className="font-bold">{stats.ipsWithOneSEoLComponent}</span>
             </div>
-            <div className="flex justify-between">
+            <div 
+              className="flex justify-between items-center p-2 cursor-pointer hover:bg-muted/20 rounded-md transition-colors"
+              onClick={() => setIsTwoToFiveDialogOpen(true)}
+            >
               <span className="text-sm text-muted-foreground">IPs with 2-5 SEoL Components</span>
               <span className="font-bold">{stats.ipsWithTwoToFiveSEoLComponents}</span>
             </div>
-            <div className="flex justify-between">
+            <div 
+              className="flex justify-between items-center p-2 cursor-pointer hover:bg-muted/20 rounded-md transition-colors"
+              onClick={() => setIsMoreThanFiveDialogOpen(true)}
+            >
               <span className="text-sm text-muted-foreground">IPs with &gt;5 SEoL Components</span>
               <span className="font-bold">{stats.ipsWithMoreThanFiveSEoLComponents}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* IP Details Dialogs */}
+      <Dialog open={isOneComponentDialogOpen} onOpenChange={setIsOneComponentDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>IPs with 1 SEoL Component</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">IP Address</th>
+                  <th className="text-center py-2 px-3 bg-muted">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {oneComponentIPs.map((ip, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3 font-mono">{String(ip.ip_address)}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant={
+                        ip.risk_level === "Critical" ? "destructive" : 
+                        ip.risk_level === "High" ? "default" : 
+                        ip.risk_level === "Medium" ? "secondary" :
+                        "outline"
+                      }>
+                        {ip.risk_level}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isTwoToFiveDialogOpen} onOpenChange={setIsTwoToFiveDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>IPs with 2-5 SEoL Components</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">IP Address</th>
+                  <th className="text-center py-2 px-3 bg-muted">SEoL Component Count</th>
+                  <th className="text-center py-2 px-3 bg-muted">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {twoToFiveComponentIPs.map((ip, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3 font-mono">{String(ip.ip_address)}</td>
+                    <td className="py-2 px-3 text-center font-bold">{ip.seol_component_count}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant={
+                        ip.risk_level === "Critical" ? "destructive" : 
+                        ip.risk_level === "High" ? "default" : 
+                        ip.risk_level === "Medium" ? "secondary" :
+                        "outline"
+                      }>
+                        {ip.risk_level}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isMoreThanFiveDialogOpen} onOpenChange={setIsMoreThanFiveDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>IPs with More Than 5 SEoL Components</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">IP Address</th>
+                  <th className="text-center py-2 px-3 bg-muted">SEoL Component Count</th>
+                  <th className="text-center py-2 px-3 bg-muted">Risk Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {moreThanFiveComponentIPs.map((ip, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3 font-mono">{String(ip.ip_address)}</td>
+                    <td className="py-2 px-3 text-center font-bold">{ip.seol_component_count}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant={
+                        ip.risk_level === "Critical" ? "destructive" : 
+                        ip.risk_level === "High" ? "default" : 
+                        ip.risk_level === "Medium" ? "secondary" :
+                        "outline"
+                      }>
+                        {ip.risk_level}
+                      </Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Table and Chart Split 50/50 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -285,7 +427,59 @@ export default function EOLIPs() {
 
       {/* Complete List - Full Width */}
       <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">Complete List of All IPs with SEoL Components</h3>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-lg font-semibold">Complete List of All IPs with SEoL Components</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={selectedRiskLevel === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedRiskLevel(null)}
+            >
+              All Risk Levels
+            </Button>
+            <div className="relative group">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                Filter by Risk Level
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <div className="absolute right-0 mt-2 w-48 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="py-1">
+                  {["Critical", "High", "Medium", "Low"].map((riskLevel) => (
+                    <button
+                      key={riskLevel}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-muted flex items-center justify-between ${
+                        selectedRiskLevel === riskLevel ? 'bg-muted' : ''
+                      }`}
+                      onClick={() => setSelectedRiskLevel(riskLevel)}
+                    >
+                      <span>{riskLevel}</span>
+                      {selectedRiskLevel === riskLevel && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-primary"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="max-h-96 overflow-y-auto">
           <table className="w-full">
             <thead className="sticky top-0 bg-background">
@@ -296,7 +490,7 @@ export default function EOLIPs() {
               </tr>
             </thead>
             <tbody>
-              {eolIPData?.map((item, index) => (
+              {filteredIPData.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono text-sm">{String(item.ip_address)}</td>
                   <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>

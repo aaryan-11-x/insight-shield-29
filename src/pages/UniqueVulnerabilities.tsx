@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useState, useMemo } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface UniqueVulnerabilityData {
   vulnerability_name: string;
@@ -27,6 +33,8 @@ const ITEMS_PER_PAGE = 50;
 export default function UniqueVulnerabilities() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isKEVDialogOpen, setIsKEVDialogOpen] = useState(false);
+  const [isCVEDialogOpen, setIsCVEDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: uniqueVulnerabilities, isLoading } = useQuery({
@@ -51,7 +59,7 @@ export default function UniqueVulnerabilities() {
   });
 
   // Memoize calculations to prevent unnecessary recalculations
-  const { categoriesData, overviewStats, topVulnerabilities, paginatedData, totalPages } = useMemo(() => {
+  const { categoriesData, overviewStats, topVulnerabilities, paginatedData, totalPages, kevListedVulnerabilities, cveVulnerabilities } = useMemo(() => {
     if (!uniqueVulnerabilities) {
       return {
         categoriesData: [],
@@ -64,7 +72,9 @@ export default function UniqueVulnerabilities() {
         },
         topVulnerabilities: [],
         paginatedData: [],
-        totalPages: 0
+        totalPages: 0,
+        kevListedVulnerabilities: [],
+        cveVulnerabilities: []
       };
     }
 
@@ -88,9 +98,58 @@ export default function UniqueVulnerabilities() {
     // Top 10 vulnerabilities by instance count
     const topVulnerabilities = uniqueVulnerabilities.slice(0, 10);
 
+    // Get KEV listed vulnerabilities sorted by severity
+    const kevListedVulnerabilities = uniqueVulnerabilities
+      .filter(v => v.kev_listed)
+      .sort((a, b) => {
+        // First sort by severity
+        const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+        const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+        if (severityDiff !== 0) return severityDiff;
+        
+        // If severity is same, sort by affected hosts
+        return b.affected_hosts - a.affected_hosts;
+      });
+
+    // Get vulnerabilities with CVE sorted by severity, KEV status, and affected hosts
+    const cveVulnerabilities = uniqueVulnerabilities
+      .filter(v => v.cve)
+      .sort((a, b) => {
+        // First sort by severity
+        const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+        const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+        if (severityDiff !== 0) return severityDiff;
+        
+        // If severity is same, sort by KEV status
+        if (a.kev_listed !== b.kev_listed) {
+          return a.kev_listed ? -1 : 1; // KEV listed first
+        }
+        
+        // If KEV status is same, sort by affected hosts
+        return b.affected_hosts - a.affected_hosts;
+      });
+
+    // Sort vulnerabilities: CVE first, then by CVE year (oldest first)
+    const sortedVulnerabilities = [...uniqueVulnerabilities].sort((a, b) => {
+      // First sort by having CVE
+      if (a.cve && !b.cve) return -1;
+      if (!a.cve && b.cve) return 1;
+      
+      // If both have CVE, sort by CVE year (oldest first)
+      if (a.cve && b.cve) {
+        const yearA = parseInt(a.cve.split('-')[1]);
+        const yearB = parseInt(b.cve.split('-')[1]);
+        return yearA - yearB;
+      }
+      
+      // If neither has CVE, sort by severity
+      const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+      return severityOrder[a.severity] - severityOrder[b.severity];
+    });
+
     // Pagination
-    const totalPages = Math.ceil(uniqueVulnerabilities.length / ITEMS_PER_PAGE);
-    const paginatedData = uniqueVulnerabilities.slice(
+    const totalPages = Math.ceil(sortedVulnerabilities.length / ITEMS_PER_PAGE);
+    const paginatedData = sortedVulnerabilities.slice(
       (currentPage - 1) * ITEMS_PER_PAGE,
       currentPage * ITEMS_PER_PAGE
     );
@@ -100,7 +159,9 @@ export default function UniqueVulnerabilities() {
       overviewStats,
       topVulnerabilities,
       paginatedData,
-      totalPages
+      totalPages,
+      kevListedVulnerabilities,
+      cveVulnerabilities
     };
   }, [uniqueVulnerabilities, currentPage]);
 
@@ -231,15 +292,29 @@ export default function UniqueVulnerabilities() {
       <div className="chart-container">
         <h3 className="text-lg font-semibold mb-4">Vulnerability Overview</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-background p-4 rounded border">
+          <div 
+            className="bg-background p-4 rounded border cursor-pointer hover:bg-muted/20 transition-colors"
+            onClick={() => {
+              const tableElement = document.getElementById('vulnerability-analysis-table');
+              if (tableElement) {
+                tableElement.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
             <p className="text-sm text-muted-foreground">Total Unique Vulnerabilities</p>
             <p className="text-2xl font-bold">{overviewStats.totalVulnerabilities}</p>
           </div>
-          <div className="bg-background p-4 rounded border">
+          <div 
+            className="bg-background p-4 rounded border cursor-pointer hover:bg-muted/20 transition-colors"
+            onClick={() => setIsCVEDialogOpen(true)}
+          >
             <p className="text-sm text-muted-foreground">With CVE</p>
             <p className="text-2xl font-bold">{overviewStats.withCVE}</p>
           </div>
-          <div className="bg-background p-4 rounded border">
+          <div 
+            className="bg-background p-4 rounded border cursor-pointer hover:bg-muted/20 transition-colors"
+            onClick={() => setIsKEVDialogOpen(true)}
+          >
             <p className="text-sm text-muted-foreground">KEV Listed</p>
             <p className="text-2xl font-bold">{overviewStats.kevListed}</p>
           </div>
@@ -326,8 +401,94 @@ export default function UniqueVulnerabilities() {
         </div>
       </div>
 
+      {/* KEV Listed Vulnerabilities Dialog */}
+      <Dialog open={isKEVDialogOpen} onOpenChange={setIsKEVDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>KEV Listed Vulnerabilities</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">Vulnerability Name</th>
+                  <th className="text-center py-2 px-3 bg-muted">Severity</th>
+                  <th className="text-center py-2 px-3 bg-muted">CVE</th>
+                  <th className="text-center py-2 px-3 bg-muted">Affected Hosts</th>
+                  <th className="text-center py-2 px-3 bg-muted">Instance Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {kevListedVulnerabilities.map((vuln, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3">{vuln.vulnerability_name}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant={
+                        vuln.severity === "Critical" ? "destructive" : 
+                        vuln.severity === "High" ? "default" : "secondary"
+                      }>
+                        {vuln.severity}
+                      </Badge>
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      <code className="text-xs bg-background px-1 py-0.5 rounded">{vuln.cve}</code>
+                    </td>
+                    <td className="py-2 px-3 text-center font-bold">{vuln.affected_hosts}</td>
+                    <td className="py-2 px-3 text-center font-bold">{vuln.instance_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* CVE Vulnerabilities Dialog */}
+      <Dialog open={isCVEDialogOpen} onOpenChange={setIsCVEDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vulnerabilities with CVE</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-3 bg-muted">Vulnerability Name</th>
+                  <th className="text-center py-2 px-3 bg-muted">Severity</th>
+                  <th className="text-center py-2 px-3 bg-muted">KEV Listed</th>
+                  <th className="text-center py-2 px-3 bg-muted">Affected Hosts</th>
+                  <th className="text-center py-2 px-3 bg-muted">Instance Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cveVulnerabilities.map((vuln, index) => (
+                  <tr key={index} className="border-b hover:bg-muted/20">
+                    <td className="py-2 px-3">{vuln.vulnerability_name}</td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant={
+                        vuln.severity === "Critical" ? "destructive" : 
+                        vuln.severity === "High" ? "default" : "secondary"
+                      }>
+                        {vuln.severity}
+                      </Badge>
+                    </td>
+                    <td className="py-2 px-3 text-center">
+                      <Badge variant={vuln.kev_listed ? "destructive" : "secondary"}>
+                        {vuln.kev_listed ? "Yes" : "No"}
+                      </Badge>
+                    </td>
+                    <td className="py-2 px-3 text-center font-bold">{vuln.affected_hosts}</td>
+                    <td className="py-2 px-3 text-center font-bold">{vuln.instance_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Detailed Vulnerabilities Table */}
-      <div className="chart-container">
+      <div className="chart-container" id="vulnerability-analysis-table">
         <h3 className="text-lg font-semibold mb-4">Detailed Vulnerability Analysis</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
