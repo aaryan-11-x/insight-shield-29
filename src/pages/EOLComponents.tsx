@@ -6,8 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface EOLComponentData {
   created_at: string;
@@ -26,10 +27,12 @@ interface EOLIPData {
   run_id: string;
 }
 
-const ITEMS_PER_PAGE = 100;
+const ITEMS_PER_PAGE = 75;
 
 export default function EOLComponents() {
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const { data: eolData, isLoading } = useQuery({
     queryKey: ['eol-components'],
@@ -105,6 +108,70 @@ export default function EOLComponents() {
   // Calculate total SEoL instances across all hosts
   const totalSEoLInstances = eolIPData?.reduce((sum, item) => sum + item.seol_component_count, 0) || 0;
 
+  const handleDownloadSheet = async () => {
+    try {
+      setIsDownloading(true);
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
+      
+      if (!instanceId || !runId) {
+        console.error('Instance ID or Run ID not found');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Instance ID or Run ID not found",
+          duration: 4000,
+        });
+        return;
+      }
+
+      // Encode the sheet name in Base64 URL-safe format
+      const sheetName = "5.1 EOL Components";
+      const encodedSheetName = btoa(decodeURIComponent(encodeURIComponent(sheetName)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      // Make the API request
+      const response = await fetch(
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sheetName.replace(' ', '_')}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading sheet:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to download sheet',
+        duration: 4000,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (isLoading || ipLoading) {
     return (
       <div className="space-y-6">
@@ -113,7 +180,6 @@ export default function EOLComponents() {
             <h1 className="text-3xl font-bold">EOL Components</h1>
             <p className="text-muted-foreground">End-of-life component tracking and risk assessment</p>
           </div>
-          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL data...</p>
@@ -124,12 +190,28 @@ export default function EOLComponents() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">EOL Components</h1>
-          <p className="text-muted-foreground">End-of-life component tracking and risk assessment</p>
+          <p className="text-muted-foreground">Detailed analysis of End-of-Life components</p>
         </div>
-        <DownloadDropdown />
+        <Button 
+          onClick={handleDownloadSheet} 
+          className="flex items-center gap-2"
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Sheet
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Unique SEoL Components Table and Chart */}

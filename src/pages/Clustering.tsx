@@ -3,7 +3,10 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
-import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 interface ClusteringData {
   affected_hosts: number;
@@ -17,6 +20,7 @@ interface ClusteringData {
   product_service: string;
   total_vulnerabilities: number;
   instance_id: UUID;
+  run_id: string;
 }
 
 export default function Clustering() {
@@ -24,10 +28,12 @@ export default function Clustering() {
     queryKey: ['clustering'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('vulnerability_clustering')
         .select('*')
         .eq('instance_id', instanceId)
+        .eq('run_id', runId)
         .order('total_vulnerabilities', { ascending: false });
       
       if (error) {
@@ -39,6 +45,9 @@ export default function Clustering() {
     }
   });
 
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
+
   // Get top 5 clusters for pie chart
   const topClustersData = clusteringData ? 
     clusteringData.slice(0, 5).map((item, index) => ({
@@ -46,6 +55,70 @@ export default function Clustering() {
       vulnerabilities: item.total_vulnerabilities,
       color: ["#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#2563eb"][index] || "#6b7280"
     })) : [];
+
+  const handleDownloadSheet = async () => {
+    try {
+      setIsDownloading(true);
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
+      
+      if (!instanceId || !runId) {
+        console.error('Instance ID or Run ID not found');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Instance ID or Run ID not found",
+          duration: 4000,
+        });
+        return;
+      }
+
+      // Encode the sheet name in Base64 URL-safe format
+      const sheetName = "3.2 Vulnerability Clustering";
+      const encodedSheetName = btoa(decodeURIComponent(encodeURIComponent(sheetName)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      // Make the API request
+      const response = await fetch(
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sheetName.replace(' ', '_')}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading sheet:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to download sheet',
+        duration: 4000,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -55,7 +128,23 @@ export default function Clustering() {
             <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
             <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
           </div>
-          <DownloadDropdown />
+          <Button 
+            onClick={handleDownloadSheet} 
+            className="flex items-center gap-2"
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Download Sheet
+              </>
+            )}
+          </Button>
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading vulnerability clustering data...</p>
@@ -71,7 +160,23 @@ export default function Clustering() {
           <h1 className="text-3xl font-bold">Vulnerability Clustering</h1>
           <p className="text-muted-foreground">This sheet groups vulnerabilities by affected product/service, enabling targeted remediation campaigns and efficient operational planning.</p>
         </div>
-        <DownloadDropdown />
+        <Button 
+          onClick={handleDownloadSheet} 
+          className="flex items-center gap-2"
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Sheet
+            </>
+          )}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

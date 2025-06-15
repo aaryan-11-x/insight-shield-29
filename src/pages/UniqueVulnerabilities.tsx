@@ -3,6 +3,10 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useState, useMemo } from "react";
 
 interface UniqueVulnerabilityData {
   vulnerability_name: string;
@@ -18,7 +22,13 @@ interface UniqueVulnerabilityData {
   run_id: string;
 }
 
+const ITEMS_PER_PAGE = 50;
+
 export default function UniqueVulnerabilities() {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
+
   const { data: uniqueVulnerabilities, isLoading } = useQuery({
     queryKey: ['unique-vulnerabilities'],
     queryFn: async () => {
@@ -29,7 +39,6 @@ export default function UniqueVulnerabilities() {
         .select('*')
         .eq('instance_id', instanceId)
         .eq('run_id', runId)
-        .order('cve', { ascending: true })
         .order('instance_count', { ascending: false });
       
       if (error) {
@@ -37,42 +46,127 @@ export default function UniqueVulnerabilities() {
         throw error;
       }
       
-      return (data as UniqueVulnerabilityData[]).sort((a, b) => {
-        if (a.cve && b.cve) {
-          return a.cve.localeCompare(b.cve);
-        }
-        if (a.cve) return -1;
-        if (b.cve) return 1;
-        return b.instance_count - a.instance_count;
-      });
+      return data as UniqueVulnerabilityData[];
     }
   });
 
-  // Calculate vulnerability categories distribution
-  const categoriesData = uniqueVulnerabilities ? [
-    { name: "Critical", value: uniqueVulnerabilities.filter(v => v.severity === "Critical").length, color: "#dc2626" },
-    { name: "High", value: uniqueVulnerabilities.filter(v => v.severity === "High").length, color: "#ea580c" },
-    { name: "Medium", value: uniqueVulnerabilities.filter(v => v.severity === "Medium").length, color: "#ca8a04" },
-    { name: "Low", value: uniqueVulnerabilities.filter(v => v.severity === "Low").length, color: "#16a34a" },
-  ] : [];
+  // Memoize calculations to prevent unnecessary recalculations
+  const { categoriesData, overviewStats, topVulnerabilities, paginatedData, totalPages } = useMemo(() => {
+    if (!uniqueVulnerabilities) {
+      return {
+        categoriesData: [],
+        overviewStats: {
+          totalVulnerabilities: 0,
+          withCVE: 0,
+          kevListed: 0,
+          totalInstances: 0,
+          totalAffectedHosts: 0,
+        },
+        topVulnerabilities: [],
+        paginatedData: [],
+        totalPages: 0
+      };
+    }
 
-  // Calculate vulnerability overview stats
-  const overviewStats = uniqueVulnerabilities ? {
-    totalVulnerabilities: uniqueVulnerabilities.length,
-    withCVE: uniqueVulnerabilities.filter(v => v.cve).length,
-    kevListed: uniqueVulnerabilities.filter(v => v.kev_listed).length,
-    totalInstances: uniqueVulnerabilities.reduce((sum, v) => sum + v.instance_count, 0),
-    totalAffectedHosts: uniqueVulnerabilities.reduce((sum, v) => sum + v.affected_hosts, 0),
-  } : {
-    totalVulnerabilities: 0,
-    withCVE: 0,
-    kevListed: 0,
-    totalInstances: 0,
-    totalAffectedHosts: 0,
+    // Calculate vulnerability categories distribution
+    const categoriesData = [
+      { name: "Critical", value: uniqueVulnerabilities.filter(v => v.severity === "Critical").length, color: "#dc2626" },
+      { name: "High", value: uniqueVulnerabilities.filter(v => v.severity === "High").length, color: "#ea580c" },
+      { name: "Medium", value: uniqueVulnerabilities.filter(v => v.severity === "Medium").length, color: "#ca8a04" },
+      { name: "Low", value: uniqueVulnerabilities.filter(v => v.severity === "Low").length, color: "#16a34a" },
+    ];
+
+    // Calculate vulnerability overview stats
+    const overviewStats = {
+      totalVulnerabilities: uniqueVulnerabilities.length,
+      withCVE: uniqueVulnerabilities.filter(v => v.cve).length,
+      kevListed: uniqueVulnerabilities.filter(v => v.kev_listed).length,
+      totalInstances: uniqueVulnerabilities.reduce((sum, v) => sum + v.instance_count, 0),
+      totalAffectedHosts: uniqueVulnerabilities.reduce((sum, v) => sum + v.affected_hosts, 0),
+    };
+
+    // Top 10 vulnerabilities by instance count
+    const topVulnerabilities = uniqueVulnerabilities.slice(0, 10);
+
+    // Pagination
+    const totalPages = Math.ceil(uniqueVulnerabilities.length / ITEMS_PER_PAGE);
+    const paginatedData = uniqueVulnerabilities.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    );
+
+    return {
+      categoriesData,
+      overviewStats,
+      topVulnerabilities,
+      paginatedData,
+      totalPages
+    };
+  }, [uniqueVulnerabilities, currentPage]);
+
+  const handleDownloadSheet = async () => {
+    try {
+      setIsDownloading(true);
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
+      
+      if (!instanceId || !runId) {
+        console.error('Instance ID or Run ID not found');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Instance ID or Run ID not found",
+          duration: 4000,
+        });
+        return;
+      }
+
+      // Encode the sheet name in Base64 URL-safe format
+      const sheetName = "3.3 Unique Vulnerabilities";
+      const encodedSheetName = btoa(decodeURIComponent(encodeURIComponent(sheetName)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      // Make the API request
+      const response = await fetch(
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sheetName.replace(' ', '_')}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading sheet:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to download sheet',
+        duration: 4000,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
-
-  // Top 10 vulnerabilities by instance count
-  const topVulnerabilities = uniqueVulnerabilities?.slice(0, 10) || [];
 
   if (isLoading) {
     return (
@@ -82,7 +176,23 @@ export default function UniqueVulnerabilities() {
             <h1 className="text-3xl font-bold">Unique Vulnerabilities</h1>
             <p className="text-muted-foreground">Analysis of unique vulnerabilities across the infrastructure</p>
           </div>
-          <DownloadDropdown />
+          <Button 
+            onClick={handleDownloadSheet} 
+            className="flex items-center gap-2"
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Download Sheet
+              </>
+            )}
+          </Button>
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading unique vulnerabilities data...</p>
@@ -98,7 +208,23 @@ export default function UniqueVulnerabilities() {
           <h1 className="text-3xl font-bold">Unique Vulnerabilities</h1>
           <p className="text-muted-foreground">Analysis of unique vulnerabilities across the infrastructure</p>
         </div>
-        <DownloadDropdown />
+        <Button 
+          onClick={handleDownloadSheet} 
+          className="flex items-center gap-2"
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Sheet
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Vulnerability Overview Statistics */}
@@ -219,7 +345,7 @@ export default function UniqueVulnerabilities() {
               </tr>
             </thead>
             <tbody>
-              {uniqueVulnerabilities?.map((item, index) => (
+              {paginatedData?.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
                   <td className="py-3 px-2">{item.vulnerability_name}</td>
                   <td className="py-3 px-2 text-center">
@@ -251,6 +377,31 @@ export default function UniqueVulnerabilities() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, uniqueVulnerabilities?.length || 0)} of {uniqueVulnerabilities?.length || 0} entries
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

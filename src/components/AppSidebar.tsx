@@ -1,4 +1,4 @@
-import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw, UserCog, Package, GitBranch } from "lucide-react";
+import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw, UserCog, Package, GitBranch, History } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
@@ -137,10 +137,6 @@ const menuItems = [
       {
         title: "Hosts Summary",
         url: "/dashboard/hosts-summary",
-      },
-      {
-        title: "Risk Trajectory",
-        url: "/dashboard/risk-trajectory",
       },
     ],
   },
@@ -314,20 +310,24 @@ export function AppSidebar() {
             <div className="p-2 border-t space-y-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between px-3">
-                    Change Run
+                  <Button variant="ghost" className="w-full justify-between px-3">
+                    <div className="flex items-center gap-3">
+                      <History className="h-4 w-4" />
+                      <span>Change Run</span>
+                    </div>
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="right" className="w-[200px]">
-                  {runs?.map((run) => (
+                <DropdownMenuContent align="end" side="right" className="w-[300px]">
+                  {runs?.map((run, index) => (
                     <DropdownMenuItem
                       key={run.id}
                       onClick={() => handleRunChange(run.run_id)}
                       className="flex items-center justify-between"
                     >
-                      <span className="truncate">
+                      <span className="truncate max-w-[220px]">
                         {new Date(run.created_at).toLocaleDateString()} - {run.run_id.slice(0, 8)}
+                        {index === 0 && " (Latest)"}
                       </span>
                       {run.run_id === currentRunId && (
                         <Check className="h-4 w-4 ml-2" />
@@ -343,7 +343,7 @@ export function AppSidebar() {
                 onClick={() => {
                   localStorage.removeItem('currentInstanceId');
                   localStorage.removeItem('currentRunId');
-                  navigate('/');
+                  navigate('/select-instance');
                 }}
               >
                 <RefreshCw className="h-4 w-4" />
@@ -353,11 +353,7 @@ export function AppSidebar() {
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-3 px-3"
-                onClick={() => {
-                  localStorage.removeItem('currentInstanceId');
-                  localStorage.removeItem('currentRunId');
-                  navigate('/login');
-                }}
+                onClick={handleLogoutClick}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>

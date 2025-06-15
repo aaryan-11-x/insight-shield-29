@@ -52,7 +52,13 @@ export default function SelectInstance() {
         throw error;
       }
       
-      return data as Instance[];
+      // Sort runs for each instance by scan_date in descending order
+      return (data as any[]).map((instance) => ({
+        ...instance,
+        runs: instance.runs?.sort((a: Run, b: Run) => 
+          new Date(b.scan_date).getTime() - new Date(a.scan_date).getTime()
+        )
+      })) as Instance[];
     }
   });
 
@@ -122,18 +128,27 @@ export default function SelectInstance() {
           <CardContent>
             <div className="space-y-6">
                 {instances?.map((instance) => (
-                <div key={instance.id} className="border rounded-lg p-4">
+                <div 
+                  key={instance.id} 
+                  className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => {
+                    if (instance.runs && instance.runs.length > 0) {
+                      setSelectedInstance(instance.instance_id);
+                      setSelectedRun(instance.runs[0].run_id); // Select the latest run
+                    }
+                  }}
+                >
                   <div className="flex items-start gap-4">
-                        <div className="mt-1">
-                          {getRiskIcon(instance.status)}
-                        </div>
+                    <div className="mt-1">
+                      {getRiskIcon(instance.status)}
+                    </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                            <h3 className="font-semibold">{instance.name}</h3>
-                            <Badge variant={instance.status === "active" ? "default" : "secondary"}>
-                              {instance.status}
-                            </Badge>
-                          </div>
+                        <h3 className="font-semibold">{instance.name}</h3>
+                        <Badge variant={instance.status === "active" ? "default" : "secondary"}>
+                          {instance.status}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground mb-4">{instance.description}</p>
                       
                       {/* Runs */}
@@ -143,7 +158,10 @@ export default function SelectInstance() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleUploadNewRun(instance.instance_id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent instance selection when clicking the button
+                              handleUploadNewRun(instance.instance_id);
+                            }}
                           >
                             <Upload className="h-4 w-4 mr-2" />
                             Upload New Run
@@ -156,8 +174,9 @@ export default function SelectInstance() {
                             setSelectedInstance(instance.instance_id);
                           }}
                           className="space-y-2"
+                          onClick={(e) => e.stopPropagation()} // Prevent instance selection when clicking radio buttons
                         >
-                          {instance.runs?.map((run) => (
+                          {instance.runs?.map((run, index, runs) => (
                             <div key={run.id} className="flex items-center space-x-2">
                               <RadioGroupItem
                                 value={run.run_id}
@@ -168,6 +187,8 @@ export default function SelectInstance() {
                                 className="text-sm"
                               >
                                 Run from {new Date(run.scan_date).toLocaleString()}
+                                {index === 0 && " (Latest)"}
+                                {index === runs.length - 1 && " (Oldest)"}
                               </Label>
                             </div>
                           ))}
@@ -175,8 +196,8 @@ export default function SelectInstance() {
                       </div>
                     </div>
                   </div>
-                  </div>
-                ))}
+                </div>
+              ))}
               </div>
 
             <Button 

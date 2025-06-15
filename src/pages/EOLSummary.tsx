@@ -1,9 +1,16 @@
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { useToast } from "@/components/ui/use-toast";
+import { useState } from "react";
 
 export default function EOLSummary() {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
+
   // Fetch EOL Components data
   const { data: eolComponentsData, isLoading: componentsLoading } = useQuery({
     queryKey: ['eol-components'],
@@ -155,6 +162,70 @@ export default function EOLSummary() {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10); // Show top 10
 
+  const handleDownloadSheet = async () => {
+    try {
+      setIsDownloading(true);
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
+      
+      if (!instanceId || !runId) {
+        console.error('Instance ID or Run ID not found');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Instance ID or Run ID not found",
+          duration: 4000,
+        });
+        return;
+      }
+
+      // Encode the sheet name in Base64 URL-safe format
+      const sheetName = "5.0 EOL Summary";
+      const encodedSheetName = btoa(decodeURIComponent(encodeURIComponent(sheetName)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      // Make the API request
+      const response = await fetch(
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        {
+          method: 'GET',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.detail || `HTTP error! status: ${response.status}`);
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link and trigger the download
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sheetName.replace(' ', '_')}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading sheet:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to download sheet',
+        duration: 4000,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -162,7 +233,23 @@ export default function EOLSummary() {
           <h1 className="text-3xl font-bold">EOL Summary</h1>
           <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
         </div>
-        <DownloadDropdown />
+        <Button 
+          onClick={handleDownloadSheet} 
+          className="flex items-center gap-2"
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Sheet
+            </>
+          )}
+        </Button>
       </div>
 
       {/* End of Life Components Summary */}
