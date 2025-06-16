@@ -26,33 +26,70 @@ export default function UploadVulnerabilities() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const steps = [
     "Uploading file...",
     "Analyzing vulnerabilities...",
+    "Processing CVE data...",
     "Generating tables...",
     "Creating charts...",
-    "Preparing final report..."
+    "Preparing Dashboard page...",
+    "Preparing IP Insights page...",
+    "Preparing Ageing of CVE page...",
+    "Preparing Most Exploitable Hosts page...",
+    "Preparing MTTM by Severity page...",
+    "Preparing Remediation Insights page...",
+    "Preparing Risk Summary page...",
+    "Preparing CVE Summary page...",
+    "Preparing Hosts Summary page...",
+    "Preparing Unique Vulnerabilities page...",
+    "Preparing SEoL Components page...",
+    "Preparing EOL IPs page...",
+    "Preparing final report...",
+    "Almost done..."
   ];
 
   useEffect(() => {
     let stepIndex = 0;
     let interval: NodeJS.Timeout;
+    let progressInterval: NodeJS.Timeout;
 
     if (isUploading) {
+      // Calculate interval based on total steps and expected duration
+      const totalDuration = 65000; // 65 seconds in milliseconds
+      const intervalTime = Math.floor(totalDuration / steps.length);
+      
       interval = setInterval(() => {
         setCurrentStep(steps[stepIndex]);
         stepIndex = (stepIndex + 1) % steps.length;
-      }, 2000);
+      }, intervalTime);
+
+      // Start analysis progress after upload completes
+      progressInterval = setInterval(() => {
+        if (uploadProgress === 100 && !isAnalyzing) {
+          setIsAnalyzing(true);
+          setAnalysisProgress(0);
+        }
+        
+        if (isAnalyzing && analysisProgress < 100) {
+          setAnalysisProgress(prev => {
+            const newProgress = prev + (100 / (totalDuration / 1000));
+            return newProgress > 100 ? 100 : newProgress;
+          });
+        }
+      }, 1000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
+      if (progressInterval) clearInterval(progressInterval);
     };
-  }, [isUploading]);
+  }, [isUploading, uploadProgress, isAnalyzing]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -291,7 +328,27 @@ export default function UploadVulnerabilities() {
 
             {isUploading && (
               <div className="space-y-4">
-                <Progress value={uploadProgress} className="h-2" />
+                {uploadProgress < 100 ? (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Upload Progress</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <Progress value={uploadProgress} className="h-2" />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Analysis Progress</span>
+                        <span>{Math.round(analysisProgress)}%</span>
+                      </div>
+                      <Progress value={analysisProgress} className="h-2" />
+                    </div>
+                  </>
+                )}
                 <p className="text-sm text-muted-foreground text-center animate-pulse">
                   {currentStep}
                 </p>

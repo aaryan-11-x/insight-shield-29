@@ -5,9 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { Server, Shield, AlertTriangle, ArrowLeft, Upload } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Server, Shield, AlertTriangle, ArrowLeft, Upload, Pencil } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Instance {
   id: number;
@@ -28,8 +38,14 @@ interface Run {
 
 export default function SelectInstance() {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedInstance, setSelectedInstance] = useState<string>("");
   const [selectedRun, setSelectedRun] = useState<string>("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingInstance, setEditingInstance] = useState<Instance | null>(null);
+  const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
 
   const { data: instances, isLoading } = useQuery({
     queryKey: ['instances'],
@@ -61,6 +77,50 @@ export default function SelectInstance() {
       })) as Instance[];
     }
   });
+
+  const updateInstanceMutation = useMutation({
+    mutationFn: async ({ instanceId, name, description }: { instanceId: string, name: string, description: string }) => {
+      const { error } = await supabase
+        .from('instances')
+        .update({ name, description })
+        .eq('instance_id', instanceId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['instances'] });
+      toast({
+        title: "Success",
+        description: "Instance updated successfully",
+      });
+      setIsEditDialogOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update instance",
+      });
+    }
+  });
+
+  const handleEdit = (instance: Instance, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingInstance(instance);
+    setNewName(instance.name);
+    setNewDescription(instance.description);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingInstance && newName.trim()) {
+      updateInstanceMutation.mutate({
+        instanceId: editingInstance.instance_id,
+        name: newName.trim(),
+        description: newDescription.trim()
+      });
+    }
+  };
 
   const handleSelect = () => {
     if (selectedInstance && selectedRun) {
@@ -127,14 +187,14 @@ export default function SelectInstance() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-                {instances?.map((instance) => (
+              {instances?.map((instance) => (
                 <div 
                   key={instance.id} 
                   className="border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => {
                     if (instance.runs && instance.runs.length > 0) {
                       setSelectedInstance(instance.instance_id);
-                      setSelectedRun(instance.runs[0].run_id); // Select the latest run
+                      setSelectedRun(instance.runs[0].run_id);
                     }
                   }}
                 >
@@ -145,9 +205,18 @@ export default function SelectInstance() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold">{instance.name}</h3>
-                        <Badge variant={instance.status === "active" ? "default" : "secondary"}>
-                          {instance.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleEdit(instance, e)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Badge variant={instance.status === "active" ? "default" : "secondary"}>
+                            {instance.status}
+                          </Badge>
+                        </div>
                       </div>
                       <p className="text-sm text-muted-foreground mb-4">{instance.description}</p>
                       
@@ -198,7 +267,7 @@ export default function SelectInstance() {
                   </div>
                 </div>
               ))}
-              </div>
+            </div>
 
             <Button 
               onClick={handleSelect}
@@ -210,6 +279,49 @@ export default function SelectInstance() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Instance</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Instance Name</Label>
+              <Input
+                id="name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter instance name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Enter instance description"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={!newName.trim() || updateInstanceMutation.isPending}
+            >
+              {updateInstanceMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
