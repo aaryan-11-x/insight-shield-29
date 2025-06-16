@@ -271,7 +271,10 @@ export default function EOLVersions() {
                     backgroundColor: "#1f2937", 
                     border: "1px solid #374151",
                     borderRadius: "8px"
-                  }} 
+                  }}
+                  formatter={(value, name) => {
+                    return [value, "Total Instances"];
+                  }}
                 />
                 <Bar dataKey="totalInstances" fill="#ef4444" />
               </BarChart>
