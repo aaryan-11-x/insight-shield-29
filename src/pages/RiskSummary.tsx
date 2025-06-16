@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface RiskSummaryData {
   count: number;
@@ -43,6 +44,7 @@ interface HostData {
 export default function RiskSummary() {
   const [isDownloading, setIsDownloading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const { data: riskData, isLoading: riskLoading } = useQuery({
     queryKey: ['risk-summary'],
@@ -203,6 +205,14 @@ export default function RiskSummary() {
     }
   };
 
+  const handleCVEClick = () => {
+    navigate('/dashboard/cve-summary');
+  };
+
+  const handleHostClick = () => {
+    navigate('/dashboard/hosts-summary');
+  };
+
   if (riskLoading || cveLoading || hostLoading) {
     return (
       <div className="space-y-6">
@@ -342,7 +352,7 @@ export default function RiskSummary() {
         {/* CVE Table */}
         <div className="chart-container">
           <h3 className="text-lg font-semibold mb-4">Top 10 CVEs</h3>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto cursor-pointer" onClick={handleCVEClick}>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -377,9 +387,9 @@ export default function RiskSummary() {
         {/* CVE Chart */}
         <div className="chart-container">
           <h3 className="text-lg font-semibold mb-4">Top CVEs by Count</h3>
-          <div className="h-80">
+          <div className="h-80 cursor-pointer" onClick={handleCVEClick}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cveChartData} layout="vertical">
+              <BarChart data={cveChartData} layout="vertical" onClick={handleCVEClick}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis type="number" stroke="#9ca3af" />
                 <YAxis type="category" dataKey="cve" stroke="#9ca3af" fontSize={10} width={100} />
@@ -390,7 +400,7 @@ export default function RiskSummary() {
                     borderRadius: "8px"
                   }}
                 />
-                <Bar dataKey="count" fill="#3b82f6" />
+                <Bar dataKey="count" fill="#3b82f6" onClick={handleCVEClick} cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -402,7 +412,7 @@ export default function RiskSummary() {
         {/* Host Table */}
         <div className="chart-container">
           <h3 className="text-lg font-semibold mb-4">Top 10 Vulnerable Hosts</h3>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto cursor-pointer" onClick={handleHostClick}>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -427,9 +437,9 @@ export default function RiskSummary() {
         {/* Host Chart */}
         <div className="chart-container">
           <h3 className="text-lg font-semibold mb-4">Top Hosts by Vulnerability Count</h3>
-          <div className="h-80">
+          <div className="h-80 cursor-pointer" onClick={handleHostClick}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hostChartData} layout="vertical">
+              <BarChart data={hostChartData} layout="vertical" onClick={handleHostClick}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis type="number" stroke="#9ca3af" />
                 <YAxis type="category" dataKey="host" stroke="#9ca3af" fontSize={10} width={120} />
@@ -442,7 +452,7 @@ export default function RiskSummary() {
                   formatter={(value, name, props) => [value, "Vulnerability Count"]}
                   labelFormatter={(label, payload) => payload?.[0]?.payload?.fullHost || label}
                 />
-                <Bar dataKey="count" fill="#ef4444" />
+                <Bar dataKey="count" fill="#ef4444" onClick={handleHostClick} cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </div>
