@@ -256,8 +256,8 @@ export default function SelectInstance() {
                                 className="text-sm"
                               >
                                 Run from {new Date(run.scan_date).toLocaleString()}
-                                {index === 0 && " (Latest)"}
-                                {index === runs.length - 1 && " (Oldest)"}
+                                {runs.length > 1 && index === 0 && " (Latest)"}
+                                {runs.length > 1 && index === runs.length - 1 && " (Oldest)"}
                               </Label>
                             </div>
                           ))}
