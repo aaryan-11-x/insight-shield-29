@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Server, Shield, AlertTriangle, ArrowLeft, Upload, Pencil } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ export default function SelectInstance() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
   const [selectedInstance, setSelectedInstance] = useState<string>("");
   const [selectedRun, setSelectedRun] = useState<string>("");
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -206,13 +208,15 @@ export default function SelectInstance() {
                       <div className="flex items-center justify-between mb-2">
                         <h3 className="font-semibold">{instance.name}</h3>
                         <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleEdit(instance, e)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          {userRole === 'superuser' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => handleEdit(instance, e)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Badge variant={instance.status === "active" ? "default" : "secondary"}>
                             {instance.status}
                           </Badge>
@@ -224,17 +228,19 @@ export default function SelectInstance() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium">Available Runs</h4>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation(); // Prevent instance selection when clicking the button
-                              handleUploadNewRun(instance.instance_id);
-                            }}
-                          >
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload New Run
-                          </Button>
+                          {userRole === 'superuser' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent instance selection when clicking the button
+                                handleUploadNewRun(instance.instance_id);
+                              }}
+                            >
+                              <Upload className="h-4 w-4 mr-2" />
+                              Upload New Run
+                            </Button>
+                          )}
                         </div>
                         <RadioGroup
                           value={selectedRun}

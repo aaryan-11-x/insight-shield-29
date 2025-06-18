@@ -1,11 +1,12 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Plus, Database } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function InstanceChoice() {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
 
   const handleCreateNew = () => {
     navigate("/create-instance");
@@ -26,24 +27,26 @@ export default function InstanceChoice() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Create New Instance Option */}
-              <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={handleCreateNew}>
-                <CardContent className="p-6 text-center">
-                  <div className="mb-4 flex justify-center">
-                    <div className="rounded-full bg-primary p-4">
-                      <Plus className="h-8 w-8 text-primary-foreground" />
+            <div className={`grid gap-6 ${userRole === 'superuser' ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+              {/* Create New Instance Option - Only visible to superusers */}
+              {userRole === 'superuser' && (
+                <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={handleCreateNew}>
+                  <CardContent className="p-6 text-center">
+                    <div className="mb-4 flex justify-center">
+                      <div className="rounded-full bg-primary p-4">
+                        <Plus className="h-8 w-8 text-primary-foreground" />
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Create New Instance</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Set up a new vulnerability scanning instance with custom configuration
-                  </p>
-                  <Button className="w-full" onClick={handleCreateNew}>
-                    Create New
-                  </Button>
-                </CardContent>
-              </Card>
+                    <h3 className="text-lg font-semibold mb-2">Create New Instance</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Set up a new vulnerability scanning instance with custom configuration
+                    </p>
+                    <Button className="w-full" onClick={handleCreateNew}>
+                      Create New
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Select Previous Instance Option */}
               <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={handleSelectPrevious}>

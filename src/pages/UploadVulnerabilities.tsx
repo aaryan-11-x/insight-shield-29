@@ -230,6 +230,29 @@ export default function UploadVulnerabilities() {
       // Add the instance ID and run ID headers
       xhr.setRequestHeader('X-Current-Instance-Id', instanceId);
       xhr.setRequestHeader('X-Current-Run-Id', runId);
+      
+      // Add Authorization header with Bearer token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${session.access_token}`);
+        console.log('Added Authorization header with Bearer token');
+      } else {
+        console.warn('No access token available for API request');
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "No authentication token available. Please log in again.",
+        });
+        setIsUploading(false);
+        return;
+      }
+      
+      console.log('Sending request with headers:', {
+        'X-Current-Instance-Id': instanceId,
+        'X-Current-Run-Id': runId,
+        'Authorization': 'Bearer [TOKEN]' // Don't log the actual token
+      });
+      
       xhr.send(formData);
 
       const result = await uploadPromise;

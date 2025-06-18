@@ -1,6 +1,6 @@
-import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, Users, TrendingUp, AlertTriangle, LogOut, RefreshCw, UserCog, Package, GitBranch, History } from "lucide-react";
+import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, TrendingUp, AlertTriangle, RefreshCw, UserCog, Package, GitBranch, History } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Sidebar,
   SidebarContent,
@@ -19,17 +19,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-import { Check, ChevronDown, Menu, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -38,7 +28,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Outlet } from "react-router-dom";
 
 const menuItems = [
   {
@@ -182,8 +171,7 @@ interface Run {
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
+  const { userRole } = useAuth();
 
   // Fetch runs for the current instance
   const { data: runs } = useQuery<Run[]>({
@@ -215,178 +203,128 @@ export function AppSidebar() {
     window.location.reload();
   };
 
-  const handleLogoutClick = () => {
-    setShowLogoutDialog(true);
-  };
-
-  const handleLogoutConfirm = () => {
-    // Clear instance and run IDs from localStorage
-    localStorage.removeItem('currentInstanceId');
-    localStorage.removeItem('currentRunId');
-    setShowLogoutDialog(false);
-    navigate("/login");
-  };
-
-  const handleLogoutCancel = () => {
-    setShowLogoutDialog(false);
-    // Stay on current page - don't navigate anywhere
-  };
-
   const handleSelectInstance = () => {
     navigate("/select-instance");
   };
 
   return (
-    <>
-      <div className={cn(
-        "fixed inset-y-0 left-0 z-50 flex flex-col bg-background border-r transition-all duration-300",
-        isOpen ? "w-64" : "w-16"
-      )}>
-        <Sidebar>
-          <SidebarHeader className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-                <Shield className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold">InsightShield</h2>
-                <p className="text-sm text-muted-foreground">Security Platform</p>
-              </div>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      {item.subItems ? (
-                        <Collapsible>
-                          <CollapsibleTrigger asChild>
-                            <SidebarMenuButton className="w-full flex items-center gap-3 px-3 py-2 text-left group">
-                              <item.icon className="h-4 w-4" />
-                              <span className="flex-1">{item.title}</span>
-                              <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
-                            </SidebarMenuButton>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <SidebarMenuSub>
-                              {item.subItems.map((subItem) => (
-                                <SidebarMenuSubItem key={subItem.title}>
-                                  <SidebarMenuSubButton
-                                    isActive={location.pathname === subItem.url}
-                                    onClick={() => navigate(subItem.url)}
-                                    asChild
-                                  >
-                                    <button className="w-full text-left text-xs">
-                                      {subItem.title}
-                                    </button>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              ))}
-                            </SidebarMenuSub>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ) : (
-                        <SidebarMenuButton 
-                          asChild 
-                          isActive={location.pathname === item.url}
-                          onClick={() => navigate(item.url)}
-                        >
-                          <button className="w-full flex items-center gap-3 px-3 py-2 text-left">
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.title}</span>
-                          </button>
+    <Sidebar>
+      <SidebarHeader className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+            <Shield className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">InsightShield</h2>
+            <p className="text-sm text-muted-foreground">Security Platform</p>
+          </div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems
+                .filter(item => {
+                  // Hide Access Management for normal users
+                  if (item.title === "Access Management" && userRole !== 'superuser') {
+                    return false;
+                  }
+                  return true;
+                })
+                .map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  {item.subItems ? (
+                    <Collapsible>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton className="w-full flex items-center gap-3 px-3 py-2 text-left group">
+                          <item.icon className="h-4 w-4" />
+                          <span className="flex-1">{item.title}</span>
+                          <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
                         </SidebarMenuButton>
-                      )}
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-          <SidebarFooter className="p-4 space-y-2">
-            <div className="p-2 border-t space-y-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="w-full justify-between px-3">
-                    <div className="flex items-center gap-3">
-                      <History className="h-4 w-4" />
-                      <span>Change Run</span>
-                    </div>
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="right" className="w-[300px]">
-                  {runs?.map((run, index) => (
-                    <DropdownMenuItem
-                      key={run.id}
-                      onClick={() => handleRunChange(run.run_id)}
-                      className="flex items-center justify-between"
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.subItems.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                isActive={location.pathname === subItem.url}
+                                onClick={() => navigate(subItem.url)}
+                                asChild
+                              >
+                                <button className="w-full text-left text-xs">
+                                  {subItem.title}
+                                </button>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuButton 
+                      asChild 
+                      isActive={location.pathname === item.url}
+                      onClick={() => navigate(item.url)}
                     >
-                      <span className="truncate max-w-[220px]">
-                        {new Date(run.created_at).toLocaleDateString()} - {run.run_id.slice(0, 8)}
-                        {index === 0 && " (Latest)"}
-                      </span>
-                      {run.run_id === currentRunId && (
-                        <Check className="h-4 w-4 ml-2" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      <button className="w-full flex items-center gap-3 px-3 py-2 text-left">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </button>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter className="p-4 space-y-2">
+        <div className="p-2 border-t space-y-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="w-full justify-between px-3">
+                <div className="flex items-center gap-3">
+                  <History className="h-4 w-4" />
+                  <span>Change Run</span>
+                </div>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="right" className="w-[300px]">
+              {runs?.map((run, index) => (
+                <DropdownMenuItem
+                  key={run.id}
+                  onClick={() => handleRunChange(run.run_id)}
+                  className="flex items-center justify-between"
+                >
+                  <span className="truncate max-w-[220px]">
+                    {new Date(run.created_at).toLocaleDateString()} - {run.run_id.slice(0, 8)}
+                    {index === 0 && " (Latest)"}
+                  </span>
+                  {run.run_id === currentRunId && (
+                    <Check className="h-4 w-4 ml-2" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 px-3"
-                onClick={() => {
-                  localStorage.removeItem('currentInstanceId');
-                  localStorage.removeItem('currentRunId');
-                  navigate('/select-instance');
-                }}
-              >
-                <RefreshCw className="h-4 w-4" />
-                <span>Select Another Instance</span>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 px-3"
-                onClick={handleLogoutClick}
-              >
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </Button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirm Logout</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to log out of InsightShield?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleLogoutCancel}>
-                No
-              </Button>
-              <Button onClick={handleLogoutConfirm}>
-                Yes
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-      <div className={cn(
-        "transition-all duration-300",
-        isOpen ? "ml-64" : "ml-16"
-      )}>
-        <Outlet />
-      </div>
-    </>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 px-3"
+            onClick={() => {
+              localStorage.removeItem('currentInstanceId');
+              localStorage.removeItem('currentRunId');
+              navigate('/select-instance');
+            }}
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Select Another Instance</span>
+          </Button>
+        </div>
+      </SidebarFooter>
+    </Sidebar>
   );
 }
