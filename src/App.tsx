@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PublicRoute } from "@/components/PublicRoute";
 import { UserInfoHeader } from "@/components/UserInfoHeader";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -50,8 +51,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<PublicRoute><Index /></PublicRoute>} />
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
             <Route path="/questionnaire" element={<ProtectedRoute><Questionnaire /></ProtectedRoute>} />
             <Route path="/instance-choice" element={<ProtectedRoute><InstanceChoice /></ProtectedRoute>} />
             <Route path="/create-instance" element={<ProtectedRoute requireSuperuser><CreateInstance /></ProtectedRoute>} />
