@@ -31,4 +31,4 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({
   }
 
   return <>{children}</>;
-}; 
+};

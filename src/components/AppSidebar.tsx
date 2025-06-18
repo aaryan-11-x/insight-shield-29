@@ -127,6 +127,10 @@ const menuItems = [
         title: "Hosts Summary",
         url: "/dashboard/hosts-summary",
       },
+      {
+        title: "Risk Trajectory",
+        url: "/dashboard/risk-trajectory",
+      },
     ],
   },
   {
