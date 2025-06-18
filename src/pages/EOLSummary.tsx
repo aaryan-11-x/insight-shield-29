@@ -3,13 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function EOLSummary() {
   const [isDownloading, setIsDownloading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Fetch EOL Components data
   const { data: eolComponentsData, isLoading: componentsLoading } = useQuery({
@@ -58,10 +59,12 @@ export default function EOLSummary() {
     queryKey: ['eol-versions'],
     queryFn: async () => {
       const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_versions')
         .select('*')
-        .eq('instance_id', instanceId);
+        .eq('instance_id', instanceId)
+        .eq('run_id', runId);
       
       if (error) {
         console.error('Error fetching EOL versions data:', error);
@@ -82,7 +85,6 @@ export default function EOLSummary() {
             <h1 className="text-3xl font-bold">EOL Summary</h1>
             <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
           </div>
-          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL summary data...</p>
@@ -99,7 +101,6 @@ export default function EOLSummary() {
             <h1 className="text-3xl font-bold">EOL Summary</h1>
             <p className="text-muted-foreground">Comprehensive overview of end-of-life components and risk assessment</p>
           </div>
-          <DownloadDropdown />
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-red-400">Error loading EOL summary data</p>
@@ -110,13 +111,13 @@ export default function EOLSummary() {
 
   // Calculate metrics from the actual data
   const totalUniqueComponents = eolComponentsData.length;
-  const softwareTypesAffected = eolComponentsData.length; // Based on requirement
+  const softwareTypesAffected = new Set(eolComponentsData.map(item => item.software)).size;
   const hostsWithEolComponents = eolIpData.length;
   const uniqueEolVersions = eolVersionsData.length;
 
-  // Calculate risk distribution from EOL IP data
-  const riskDistribution = eolIpData.reduce((acc, item) => {
-    const risk = item.risk_level?.toLowerCase() || 'unknown';
+  // Calculate risk distribution from EOL Components data (not IP data)
+  const riskDistribution = eolComponentsData.reduce((acc, item) => {
+    const risk = item.risk?.toLowerCase() || 'unknown';
     acc[risk] = (acc[risk] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -150,10 +151,10 @@ export default function EOLSummary() {
     }
   ];
 
-  // Calculate software types from EOL versions data
+  // Calculate software types from EOL versions data using unique_vulnerability_count
   const softwareTypeCount = eolVersionsData.reduce((acc, item) => {
     const softwareType = item.software_type;
-    acc[softwareType] = (acc[softwareType] || 0) + item.instance_count;
+    acc[softwareType] = (acc[softwareType] || 0) + item.unique_vulnerability_count;
     return acc;
   }, {} as Record<string, number>);
 
@@ -260,7 +261,10 @@ export default function EOLSummary() {
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">EOL Summary Statistics</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="metric-card">
+            <div 
+              className="metric-card cursor-pointer hover:bg-muted/20 transition-colors"
+              onClick={() => navigate('/dashboard/eol-components')}
+            >
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Total Unique EOL Components</p>
                 <p className="text-2xl font-bold">{totalUniqueComponents}</p>
@@ -272,13 +276,19 @@ export default function EOLSummary() {
                 <p className="text-2xl font-bold">{softwareTypesAffected}</p>
               </div>
             </div>
-            <div className="metric-card">
+            <div 
+              className="metric-card cursor-pointer hover:bg-muted/20 transition-colors"
+              onClick={() => navigate('/dashboard/eol-ips')}
+            >
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Hosts with EOL Components</p>
                 <p className="text-2xl font-bold">{hostsWithEolComponents}</p>
               </div>
             </div>
-            <div className="metric-card">
+            <div 
+              className="metric-card cursor-pointer hover:bg-muted/20 transition-colors"
+              onClick={() => navigate('/dashboard/eol-versions')}
+            >
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">Unique EOL Versions</p>
                 <p className="text-2xl font-bold">{uniqueEolVersions}</p>
@@ -339,7 +349,7 @@ export default function EOLSummary() {
                   stroke="#9ca3af"
                   domain={[0, 'dataMax + 10']}
                   label={{
-                    value: "Component Count",
+                    value: "Unique Vulnerability Count",
                     position: "insideBottom",
                     offset: -5,
                     fill: "#9ca3af",
@@ -353,6 +363,7 @@ export default function EOLSummary() {
                     border: "1px solid #374151",
                     borderRadius: "8px"
                   }}
+                  formatter={(value, name) => [value, "Unique Vulnerability Count"]}
                 />
                 <Bar dataKey="count" fill="#3b82f6" />
               </BarChart>

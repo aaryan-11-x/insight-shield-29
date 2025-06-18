@@ -120,31 +120,28 @@ export type Database = {
       eol_components: {
         Row: {
           created_at: string
-          cve: string | null
-          eol_duration_days: number | null
+          software: string
+          software_extraction_status: string
           instance_id: string
           run_id: string
-          name: string
           plugin_id: number
           risk: string
         }
         Insert: {
           created_at?: string
-          cve?: string | null
-          eol_duration_days?: number | null
+          software: string
+          software_extraction_status: string
           instance_id: string
           run_id: string
-          name: string
           plugin_id: number
           risk: string
         }
         Update: {
           created_at?: string
-          cve?: string | null
-          eol_duration_days?: number | null
+          software?: string
+          software_extraction_status?: string
           instance_id?: string
           run_id?: string
-          name?: string
           plugin_id?: number
           risk?: string
         }
@@ -171,21 +168,21 @@ export type Database = {
           run_id: string
           ip_address: unknown
           risk_level: string
-          seol_component_count: number
+          unique_eol_vulnerabilities: number
         }
         Insert: {
           instance_id: string
           run_id: string
           ip_address: unknown
           risk_level: string
-          seol_component_count: number
+          unique_eol_vulnerabilities: number
         }
         Update: {
           instance_id?: string
           run_id?: string
           ip_address?: unknown
           risk_level?: string
-          seol_component_count?: number
+          unique_eol_vulnerabilities?: number
         }
         Relationships: [
           {
@@ -296,21 +293,21 @@ export type Database = {
       }
       eol_versions: {
         Row: {
-          instance_count: number
+          unique_vulnerability_count: number
           instance_id: string
           run_id: string
           software_type: string
           version: string
         }
         Insert: {
-          instance_count: number
+          unique_vulnerability_count: number
           instance_id: string
           run_id: string
           software_type: string
           version: string
         }
         Update: {
-          instance_count?: number
+          unique_vulnerability_count?: number
           instance_id?: string
           run_id?: string
           software_type?: string

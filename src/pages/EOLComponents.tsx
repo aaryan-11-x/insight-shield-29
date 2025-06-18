@@ -12,9 +12,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 interface EOLComponentData {
   created_at: string;
-  cve: string | null;
-  eol_duration_days: number | null;
-  name: string;
+  software: string;
+  software_extraction_status: string;
   plugin_id: number;
   risk: string;
   instance_id: UUID;
@@ -22,7 +21,7 @@ interface EOLComponentData {
 }
 
 interface EOLIPData {
-  seol_component_count: number;
+  unique_eol_vulnerabilities: number;
   instance_id: string;
   run_id: string;
 }
@@ -41,17 +40,26 @@ export default function EOLComponents() {
       const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_components')
-        .select('plugin_id, name, risk, eol_duration_days, cve')
+        .select('plugin_id, software, software_extraction_status, risk')
         .eq('instance_id', instanceId)
         .eq('run_id', runId)
-        .order('eol_duration_days', { ascending: false });
+        .order('risk', { ascending: false });
       
       if (error) {
         console.error('Error fetching EOL components data:', error);
         throw error;
       }
       
-      return data;
+      // Sort by risk level: Critical, High, Medium
+      const riskOrder = { "Critical": 3, "High": 2, "Medium": 1 };
+      return data?.sort((a, b) => {
+        // Put "Unknown" software types at the end regardless of risk
+        if (a.software === "Unknown" && b.software !== "Unknown") return 1;
+        if (a.software !== "Unknown" && b.software === "Unknown") return -1;
+        
+        // Then sort by risk level
+        return (riskOrder[b.risk as keyof typeof riskOrder] || 0) - (riskOrder[a.risk as keyof typeof riskOrder] || 0);
+      });
     },
     staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
     gcTime: 10 * 60 * 1000, // Cache is kept for 10 minutes
@@ -64,7 +72,7 @@ export default function EOLComponents() {
       const runId = localStorage.getItem('currentRunId');
       const { data, error } = await supabase
         .from('eol_ip')
-        .select('seol_component_count')
+        .select('unique_eol_vulnerabilities')
         .eq('instance_id', instanceId)
         .eq('run_id', runId);
       
@@ -73,7 +81,7 @@ export default function EOLComponents() {
         throw error;
       }
       
-      return data as EOLIPData[];
+      return data;
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -95,18 +103,31 @@ export default function EOLComponents() {
 
   // Prepare chart data
   const chartData = eolData?.map(item => ({
-    name: item.name.replace(" SEoL", ""),
+    name: item.software.replace(" SEoL", ""),
     risk: item.risk,
     riskValue: riskValueMap[item.risk] ?? 0
   })) || [];
 
-  // Count components with unknown duration
-  const unknownDurationCount = eolData?.filter(item => 
-    item.eol_duration_days === null || item.eol_duration_days === undefined
-  ).length || 0;
+  // Prepare risk distribution data
+  const riskDistribution = eolData?.reduce((acc, item) => {
+    acc[item.risk] = (acc[item.risk] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  const riskChartData = Object.entries(riskDistribution).map(([risk, count]) => ({
+    risk,
+    count,
+    color: risk === "Critical" ? "#ef4444" : risk === "High" ? "#f59e0b" : "#3b82f6"
+  }));
 
   // Calculate total SEoL instances across all hosts
-  const totalSEoLInstances = eolIPData?.reduce((sum, item) => sum + item.seol_component_count, 0) || 0;
+  const totalSEoLInstances = eolIPData?.reduce((sum, item) => sum + item.unique_eol_vulnerabilities, 0) || 0;
+
+  // Calculate affected hosts count
+  const affectedHostsCount = eolIPData?.length || 0;
+
+  // Calculate unique software components count
+  const uniqueSoftwareCount = eolData ? new Set(eolData.map(item => item.plugin_id)).size : 0;
 
   const handleDownloadSheet = async () => {
     try {
@@ -214,7 +235,26 @@ export default function EOLComponents() {
         </Button>
       </div>
 
-      {/* Unique SEoL Components Table and Chart */}
+      {/* Cards Section */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <SimpleMetricCard
+          title="Unique EOL Components"
+          value={uniqueSoftwareCount}
+          color="red"
+        />
+        <SimpleMetricCard
+          title="Total Unique EOL Vulnerabilities"
+          value={totalSEoLInstances}
+          color="blue"
+        />
+        <SimpleMetricCard
+          title="Affected Hosts"
+          value={affectedHostsCount}
+          color="green"
+        />
+      </div>
+
+      {/* Unique SEoL Components Table and Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Table */}
         <div className="chart-container">
@@ -224,17 +264,25 @@ export default function EOLComponents() {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4">Plugin ID</th>
-                  <th className="text-left py-3 px-4">Name</th>
+                  <th className="text-left py-3 px-4">Software</th>
+                  <th className="text-center py-3 px-4">Software Extraction Status</th>
                   <th className="text-center py-3 px-4">Risk</th>
-                  <th className="text-center py-3 px-4">EOL Duration (Days)</th>
-                  <th className="text-center py-3 px-4">CVE</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedData?.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-4 font-mono text-sm">{item.plugin_id}</td>
-                    <td className="py-3 px-4 text-sm">{item.name}</td>
+                    <td className="py-3 px-4 text-sm">{item.software}</td>
+                    <td className="py-3 px-4 text-center">
+                      <Badge variant={
+                        item.software_extraction_status === "Success" ? "default" : 
+                        item.software_extraction_status === "Failed" ? "destructive" : 
+                        "outline"
+                      }>
+                        {item.software_extraction_status}
+                      </Badge>
+                    </td>
                     <td className="py-3 px-4 text-center">
                       <Badge variant={
                         item.risk === "Critical" ? "destructive" : 
@@ -244,12 +292,6 @@ export default function EOLComponents() {
                       }>
                         {item.risk}
                       </Badge>
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {item.eol_duration_days !== null ? item.eol_duration_days : "nan"}
-                    </td>
-                    <td className="py-3 px-4 text-center">
-                      {item.cve || "nan"}
                     </td>
                   </tr>
                 ))}
@@ -283,77 +325,120 @@ export default function EOLComponents() {
           </div>
         </div>
 
-        {/* Chart */}
-        <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Component Severity by Name</h3>
-          <div className="h-96">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={chartData}
-                layout="vertical"
-                margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis type="number" domain={[0, 3]} ticks={[1, 2, 3]} stroke="#9ca3af" />
-                <YAxis type="category" dataKey="name" stroke="#9ca3af" fontSize={12} width={200} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px",
-                    color: "#ffffff"
-                  }}
-                  formatter={(value, name, props) => {
-                    const level = Object.entries(riskValueMap).find(([k, v]) => v === value)?.[0] || "Unknown";
-                    const color = 
-                      level === "Critical" ? "#ef4444" :
-                      level === "High" ? "#f59e0b" :
-                      level === "Medium" ? "#3b82f6" :
-                      "#10b981";
-                    return [
-                      <span style={{ color: color }}>{`Risk Level: ${level}`}</span>,
-                      null
-                    ];
-                  }}
-                />
-                <Bar dataKey="riskValue">
-                  {chartData.map((entry, index) => {
-                    const color = 
-                      entry.risk === "Critical" ? "#ef4444" :
-                      entry.risk === "High" ? "#f59e0b" :
-                      entry.risk === "Medium" ? "#3b82f6" :
-                      "#10b981"; // fallback green
-                    return <Cell key={`cell-${index}`} fill={color} />;
-                  })}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        {/* Charts Section */}
+        <div className="space-y-6">
+          {/* Component Severity by Software Chart */}
+          <div className="chart-container bg-card border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 text-card-foreground">Component Severity by Software</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  layout="horizontal"
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    type="category" 
+                    dataKey="name" 
+                    stroke="#9ca3af" 
+                    fontSize={11}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                  />
+                  <YAxis 
+                    type="number" 
+                    domain={[0, 3]} 
+                    ticks={[1, 2, 3]} 
+                    stroke="#9ca3af"
+                    label={{ value: 'Risk Level', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "#1f2937", 
+                      border: "1px solid #374151",
+                      borderRadius: "8px",
+                      color: "#ffffff"
+                    }}
+                    formatter={(value, name, props) => {
+                      const level = Object.entries(riskValueMap).find(([k, v]) => v === value)?.[0] || "Unknown";
+                      const color = 
+                        level === "Critical" ? "#ef4444" :
+                        level === "High" ? "#f59e0b" :
+                        level === "Medium" ? "#3b82f6" :
+                        "#10b981";
+                      return [
+                        <span style={{ color: color }}>{`Risk Level: ${level}`}</span>,
+                        null
+                      ];
+                    }}
+                  />
+                  <Bar dataKey="riskValue" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry, index) => {
+                      const color = 
+                        entry.risk === "Critical" ? "#ef4444" :
+                        entry.risk === "High" ? "#f59e0b" :
+                        entry.risk === "Medium" ? "#3b82f6" :
+                        "#10b981";
+                      return <Cell key={`cell-${index}`} fill={color} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Risk Distribution Chart */}
+          <div className="chart-container bg-card border rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4 text-card-foreground">Risk Distribution</h3>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={riskChartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis 
+                    dataKey="risk" 
+                    stroke="#9ca3af" 
+                    fontSize={12}
+                    label={{ value: 'Risk Level', position: 'insideBottom', offset: -10 }}
+                  />
+                  <YAxis 
+                    stroke="#9ca3af"
+                    label={{ 
+                      value: 'Count', 
+                      angle: -90, 
+                      position: 'insideLeft', 
+                      style: { textAnchor: 'middle', fill: '#9ca3af' }
+                    }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: "#1f2937", 
+                      border: "1px solid #374151",
+                      borderRadius: "8px",
+                      color: "#ffffff"
+                    }}
+                    formatter={(value, name, props) => {
+                      const color = props.payload?.color || "#ffffff";
+                      return [
+                        <span style={{ color: color }}>{`Count: ${value}`}</span>,
+                        null
+                      ];
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {riskChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Cards Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <SimpleMetricCard
-          title="Total Unique SEoL Components"
-          value={eolData?.length || 0}
-          color="red"
-        />
-        <SimpleMetricCard
-          title="Total SEoL Instances (across all hosts)"
-          value={totalSEoLInstances}
-          color="blue"
-        />
-        <SimpleMetricCard
-          title="Unknown EOL Duration"
-          value={`${unknownDurationCount} Components`}
-          color="yellow"
-        />
-        <SimpleMetricCard
-          title="Total"
-          value={`${eolData?.length || 0} Components`}
-          color="green"
-        />
       </div>
     </div>
   );

@@ -5,12 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
 import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface EOLVersionData {
-  instance_count: number;
+  unique_vulnerability_count: number;
   software_type: string;
   version: string;
   instance_id: UUID;
@@ -28,7 +34,7 @@ export default function EOLVersions() {
         .select('*')
         .eq('instance_id', instanceId)
         .eq('run_id', runId)
-        .order('instance_count', { ascending: false });
+        .order('unique_vulnerability_count', { ascending: false });
       
       if (error) {
         console.error('Error fetching EOL versions data:', error);
@@ -40,6 +46,8 @@ export default function EOLVersions() {
   });
 
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSoftwareTypesDialogOpen, setIsSoftwareTypesDialogOpen] = useState(false);
+  const [selectedSoftwareType, setSelectedSoftwareType] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Function to extract version number from software type
@@ -55,7 +63,7 @@ export default function EOLVersions() {
 
   // Calculate statistics
   const stats = eolVersionData ? {
-    totalSEoLComponents: eolVersionData.reduce((sum, version) => sum + version.instance_count, 0),
+    totalSEoLComponents: eolVersionData.reduce((sum, version) => sum + version.unique_vulnerability_count, 0),
     totalDifferentSoftwareTypes: new Set(eolVersionData.map(v => v.software_type)).size,
     totalDifferentVersions: eolVersionData.length
   } : {
@@ -64,14 +72,26 @@ export default function EOLVersions() {
     totalDifferentVersions: 0
   };
 
+  // Get unique software types from data
+  const uniqueSoftwareTypes = eolVersionData ? 
+    Array.from(new Set(eolVersionData.map(v => v.software_type))).sort() : [];
+
+  // Filter data based on selected software type
+  const filteredVersionData = useMemo(() => {
+    if (!eolVersionData) return [];
+    if (!selectedSoftwareType) return eolVersionData;
+    
+    return eolVersionData.filter(v => v.software_type === selectedSoftwareType);
+  }, [eolVersionData, selectedSoftwareType]);
+
   // Create software distribution data
   const softwareDistribution = eolVersionData ? 
     Array.from(new Set(eolVersionData.map(v => v.software_type))).map(softwareType => {
       const versions = eolVersionData.filter(v => v.software_type === softwareType);
       return {
         softwareType,
-        totalInstances: versions.reduce((sum, v) => sum + v.instance_count, 0),
-        uniqueVersions: versions.length
+        totalInstances: versions.reduce((sum, v) => sum + v.unique_vulnerability_count, 0),
+        uniqueVersions: versions.reduce((sum, v) => sum + v.unique_vulnerability_count, 0)
       };
     }).sort((a, b) => b.totalInstances - a.totalInstances) : [];
 
@@ -209,6 +229,7 @@ export default function EOLVersions() {
           title="Total Different Software Types"
           value={stats.totalDifferentSoftwareTypes}
           color="blue"
+          onClick={() => setIsSoftwareTypesDialogOpen(true)}
         />
         <SimpleMetricCard
           title="Total Different Versions"
@@ -226,7 +247,7 @@ export default function EOLVersions() {
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4">Software Type</th>
-                  <th className="text-center py-3 px-4">Total Instances</th>
+                  <th className="text-center py-3 px-4">Unique Vulnerability Count</th>
                   <th className="text-center py-3 px-4">Unique Versions</th>
                 </tr>
               </thead>
@@ -243,7 +264,7 @@ export default function EOLVersions() {
                 <tr className="border-t border-border bg-muted/20">
                   <td className="py-3 px-4 font-semibold">Total</td>
                   <td className="py-3 px-4 text-center font-bold">{stats.totalSEoLComponents}</td>
-                  <td className="py-3 px-4 text-center font-bold">{stats.totalDifferentSoftwareTypes}</td>
+                  <td className="py-3 px-4 text-center font-bold">{stats.totalSEoLComponents}</td>
                 </tr>
               </tfoot>
             </table>
@@ -273,7 +294,7 @@ export default function EOLVersions() {
                     borderRadius: "8px"
                   }}
                   formatter={(value, name) => {
-                    return [value, "Total Instances"];
+                    return [value, "Unique Vulnerability Count"];
                   }}
                 />
                 <Bar dataKey="totalInstances" fill="#ef4444" />
@@ -285,28 +306,96 @@ export default function EOLVersions() {
 
       {/* SEoL Version Details */}
       <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">SEoL Version Details</h3>
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-lg font-semibold">SEoL Version Details</h3>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={selectedSoftwareType === null ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSoftwareType(null)}
+            >
+              All Software Types
+            </Button>
+            <div className="relative group">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                Filter by Software Type
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <div className="absolute right-0 mt-2 w-64 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                <div className="py-1 max-h-48 overflow-y-auto">
+                  {uniqueSoftwareTypes.map((softwareType) => (
+                    <button
+                      key={softwareType}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-muted flex items-center justify-between ${
+                        selectedSoftwareType === softwareType ? 'bg-muted' : ''
+                      }`}
+                      onClick={() => setSelectedSoftwareType(softwareType)}
+                    >
+                      <span className="truncate">{softwareType}</span>
+                      {selectedSoftwareType === softwareType && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="text-primary flex-shrink-0 ml-2"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-4">Software Type</th>
                 <th className="text-center py-3 px-4">Version</th>
-                <th className="text-center py-3 px-4">Instance Count</th>
+                <th className="text-center py-3 px-4">Unique Vulnerability Count</th>
               </tr>
             </thead>
             <tbody>
-              {eolVersionData?.map((item, index) => (
+              {filteredVersionData.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 text-sm">{item.software_type}</td>
-                  <td className="py-3 px-4 text-center font-mono text-sm">{extractVersion(item.software_type)}</td>
-                  <td className="py-3 px-4 text-center font-bold">{item.instance_count}</td>
+                  <td className="py-3 px-4 text-center font-mono text-sm">{item.version}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.unique_vulnerability_count}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Software Types Dialog */}
+      <Dialog open={isSoftwareTypesDialogOpen} onOpenChange={setIsSoftwareTypesDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Software Types ({uniqueSoftwareTypes.length})</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {uniqueSoftwareTypes.map((softwareType, index) => (
+              <div key={index} className="p-3 border rounded-md hover:bg-muted/20 transition-colors">
+                <span className="text-sm font-medium">{softwareType}</span>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

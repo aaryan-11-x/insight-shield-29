@@ -163,15 +163,18 @@ export default function Dashboard() {
         supabase.from('ageing_of_vulnerability').select('id', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId),
         supabase.from('exploitability_scoring').select('exploitability_score').gte('exploitability_score', 11).eq('instance_id', instanceId).eq('run_id', runId),
         supabase.from('exploitability_scoring').select('kev_listed').eq('kev_listed', true).eq('instance_id', instanceId).eq('run_id', runId),
-        supabase.from('eol_components').select('name', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId),
+        supabase.from('eol_components').select('plugin_id').eq('instance_id', instanceId).eq('run_id', runId),
         supabase.from('remediation_insights').select('id', { count: 'exact' }).eq('instance_id', instanceId).eq('run_id', runId)
       ]);
+
+      // Calculate unique EOL components (unique plugin IDs)
+      const uniqueEolComponents = eolData ? new Set(eolData.map(item => item.plugin_id)).size : 0;
 
       return {
         totalVulnerabilities: totalVulns?.length || 0,
         highExploitability: exploitabilityData?.length || 0,
         kevListed: kevData?.length || 0,
-        eolComponents: eolData?.length || 0,
+        eolComponents: uniqueEolComponents,
         totalRemediations: remediationData?.length || 0
       };
     }

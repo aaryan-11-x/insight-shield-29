@@ -18,7 +18,7 @@ import {
 interface EOLIPData {
   ip_address: unknown;
   risk_level: string;
-  seol_component_count: number;
+  unique_eol_vulnerabilities: number;
   instance_id: UUID;
   run_id: string;
 }
@@ -34,7 +34,7 @@ export default function EOLIPs() {
         .select('*')
         .eq('instance_id', instanceId)
         .eq('run_id', runId)
-        .order('seol_component_count', { ascending: false });
+        .order('unique_eol_vulnerabilities', { ascending: false });
       
       if (error) {
         console.error('Error fetching EOL IP data:', error);
@@ -55,15 +55,17 @@ export default function EOLIPs() {
   // Calculate statistics
   const stats = eolIPData ? {
     totalIPsWithSEoLComponents: eolIPData.length,
+    totalUniqueEOLVulnerabilities: eolIPData.reduce((sum, ip) => sum + ip.unique_eol_vulnerabilities, 0),
     averageSEoLComponentsPerIP: eolIPData.length > 0 ? 
-      (eolIPData.reduce((sum, ip) => sum + ip.seol_component_count, 0) / eolIPData.length).toFixed(2) : 0,
+      (eolIPData.reduce((sum, ip) => sum + ip.unique_eol_vulnerabilities, 0) / eolIPData.length).toFixed(2) : 0,
     maximumSEoLComponentsOnSingleIP: eolIPData.length > 0 ? 
-      Math.max(...eolIPData.map(ip => ip.seol_component_count)) : 0,
-    ipsWithOneSEoLComponent: eolIPData.filter(ip => ip.seol_component_count === 1).length,
-    ipsWithTwoToFiveSEoLComponents: eolIPData.filter(ip => ip.seol_component_count >= 2 && ip.seol_component_count <= 5).length,
-    ipsWithMoreThanFiveSEoLComponents: eolIPData.filter(ip => ip.seol_component_count > 5).length
+      Math.max(...eolIPData.map(ip => ip.unique_eol_vulnerabilities)) : 0,
+    ipsWithOneSEoLComponent: eolIPData.filter(ip => ip.unique_eol_vulnerabilities === 1).length,
+    ipsWithTwoToFiveSEoLComponents: eolIPData.filter(ip => ip.unique_eol_vulnerabilities >= 2 && ip.unique_eol_vulnerabilities <= 5).length,
+    ipsWithMoreThanFiveSEoLComponents: eolIPData.filter(ip => ip.unique_eol_vulnerabilities > 5).length
   } : {
     totalIPsWithSEoLComponents: 0,
+    totalUniqueEOLVulnerabilities: 0,
     averageSEoLComponentsPerIP: 0,
     maximumSEoLComponentsOnSingleIP: 0,
     ipsWithOneSEoLComponent: 0,
@@ -71,13 +73,17 @@ export default function EOLIPs() {
     ipsWithMoreThanFiveSEoLComponents: 0
   };
 
+  // Get unique risk levels from data
+  const uniqueRiskLevels = eolIPData ? 
+    Array.from(new Set(eolIPData.map(ip => ip.risk_level))).sort() : [];
+
   // Get top 10 IPs for chart
   const topIPsForChart = eolIPData ? eolIPData.slice(0, 10) : [];
 
   // Get filtered IPs for each category
-  const oneComponentIPs = eolIPData?.filter(ip => ip.seol_component_count === 1) || [];
-  const twoToFiveComponentIPs = eolIPData?.filter(ip => ip.seol_component_count >= 2 && ip.seol_component_count <= 5) || [];
-  const moreThanFiveComponentIPs = eolIPData?.filter(ip => ip.seol_component_count > 5) || [];
+  const oneComponentIPs = eolIPData?.filter(ip => ip.unique_eol_vulnerabilities === 1) || [];
+  const twoToFiveComponentIPs = eolIPData?.filter(ip => ip.unique_eol_vulnerabilities >= 2 && ip.unique_eol_vulnerabilities <= 5) || [];
+  const moreThanFiveComponentIPs = eolIPData?.filter(ip => ip.unique_eol_vulnerabilities > 5) || [];
 
   // Filter data based on selected risk level
   const filteredIPData = useMemo(() => {
@@ -216,15 +222,19 @@ export default function EOLIPs() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-3">
             <div className="flex justify-between items-center p-2">
-              <span className="text-sm text-muted-foreground">Total IPs with SEoL Components</span>
+              <span className="text-sm text-muted-foreground">Total IPs with EOL Vulnerabilities</span>
               <span className="font-bold">{stats.totalIPsWithSEoLComponents}</span>
             </div>
             <div className="flex justify-between items-center p-2">
-              <span className="text-sm text-muted-foreground">Average SEoL Components per IP</span>
+              <span className="text-sm text-muted-foreground">Total Unique EOL Vulnerabilities</span>
+              <span className="font-bold">{stats.totalUniqueEOLVulnerabilities}</span>
+            </div>
+            <div className="flex justify-between items-center p-2">
+              <span className="text-sm text-muted-foreground">Average EOL Vulnerabilities per IP</span>
               <span className="font-bold">{stats.averageSEoLComponentsPerIP}</span>
             </div>
             <div className="flex justify-between items-center p-2">
-              <span className="text-sm text-muted-foreground">Maximum SEoL Components on Single IP</span>
+              <span className="text-sm text-muted-foreground">Maximum EOL Vulnerabilities on Single IP</span>
               <span className="font-bold">{stats.maximumSEoLComponentsOnSingleIP}</span>
             </div>
           </div>
@@ -233,21 +243,21 @@ export default function EOLIPs() {
               className="flex justify-between items-center p-2 cursor-pointer hover:bg-muted/20 rounded-md transition-colors"
               onClick={() => setIsOneComponentDialogOpen(true)}
             >
-              <span className="text-sm text-muted-foreground">IPs with 1 SEoL Component</span>
+              <span className="text-sm text-muted-foreground">IPs with 1 EOL Vulnerabilities</span>
               <span className="font-bold">{stats.ipsWithOneSEoLComponent}</span>
             </div>
             <div 
               className="flex justify-between items-center p-2 cursor-pointer hover:bg-muted/20 rounded-md transition-colors"
               onClick={() => setIsTwoToFiveDialogOpen(true)}
             >
-              <span className="text-sm text-muted-foreground">IPs with 2-5 SEoL Components</span>
+              <span className="text-sm text-muted-foreground">IPs with 2-5 EOL Vulnerabilities</span>
               <span className="font-bold">{stats.ipsWithTwoToFiveSEoLComponents}</span>
             </div>
             <div 
               className="flex justify-between items-center p-2 cursor-pointer hover:bg-muted/20 rounded-md transition-colors"
               onClick={() => setIsMoreThanFiveDialogOpen(true)}
             >
-              <span className="text-sm text-muted-foreground">IPs with &gt;5 SEoL Components</span>
+              <span className="text-sm text-muted-foreground">IPs with &gt;5 EOL Vulnerabilities</span>
               <span className="font-bold">{stats.ipsWithMoreThanFiveSEoLComponents}</span>
             </div>
           </div>
@@ -293,14 +303,14 @@ export default function EOLIPs() {
       <Dialog open={isTwoToFiveDialogOpen} onOpenChange={setIsTwoToFiveDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>IPs with 2-5 SEoL Components</DialogTitle>
+            <DialogTitle>IPs with 2-5 EOL Vulnerabilities</DialogTitle>
           </DialogHeader>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 px-3 bg-muted">IP Address</th>
-                  <th className="text-center py-2 px-3 bg-muted">SEoL Component Count</th>
+                  <th className="text-center py-2 px-3 bg-muted">Unique EOL Vulnerabilities</th>
                   <th className="text-center py-2 px-3 bg-muted">Risk Level</th>
                 </tr>
               </thead>
@@ -308,7 +318,7 @@ export default function EOLIPs() {
                 {twoToFiveComponentIPs.map((ip, index) => (
                   <tr key={index} className="border-b hover:bg-muted/20">
                     <td className="py-2 px-3 font-mono">{String(ip.ip_address)}</td>
-                    <td className="py-2 px-3 text-center font-bold">{ip.seol_component_count}</td>
+                    <td className="py-2 px-3 text-center font-bold">{ip.unique_eol_vulnerabilities}</td>
                     <td className="py-2 px-3 text-center">
                       <Badge variant={
                         ip.risk_level === "Critical" ? "destructive" : 
@@ -330,14 +340,14 @@ export default function EOLIPs() {
       <Dialog open={isMoreThanFiveDialogOpen} onOpenChange={setIsMoreThanFiveDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>IPs with More Than 5 SEoL Components</DialogTitle>
+            <DialogTitle>IPs with More Than 5 EOL Vulnerabilities</DialogTitle>
           </DialogHeader>
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 px-3 bg-muted">IP Address</th>
-                  <th className="text-center py-2 px-3 bg-muted">SEoL Component Count</th>
+                  <th className="text-center py-2 px-3 bg-muted">Unique EOL Vulnerabilities</th>
                   <th className="text-center py-2 px-3 bg-muted">Risk Level</th>
                 </tr>
               </thead>
@@ -345,7 +355,7 @@ export default function EOLIPs() {
                 {moreThanFiveComponentIPs.map((ip, index) => (
                   <tr key={index} className="border-b hover:bg-muted/20">
                     <td className="py-2 px-3 font-mono">{String(ip.ip_address)}</td>
-                    <td className="py-2 px-3 text-center font-bold">{ip.seol_component_count}</td>
+                    <td className="py-2 px-3 text-center font-bold">{ip.unique_eol_vulnerabilities}</td>
                     <td className="py-2 px-3 text-center">
                       <Badge variant={
                         ip.risk_level === "Critical" ? "destructive" : 
@@ -368,13 +378,13 @@ export default function EOLIPs() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top IPs Table - Left Side */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Top IPs with Most SEoL Components (For Chart)</h3>
+          <h3 className="text-lg font-semibold mb-4">Top IPs with Most EOL Vulnerabilities</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-4">IP Address</th>
-                  <th className="text-center py-3 px-4">SEoL Component Count</th>
+                  <th className="text-center py-3 px-4">Unique EOL Vulnerabilities</th>
                   <th className="text-center py-3 px-4">Risk Level</th>
                 </tr>
               </thead>
@@ -382,7 +392,7 @@ export default function EOLIPs() {
                 {topIPsForChart.map((item, index) => (
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-4 font-mono text-sm">{String(item.ip_address)}</td>
-                    <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>
+                    <td className="py-3 px-4 text-center font-bold">{item.unique_eol_vulnerabilities}</td>
                     <td className="py-3 px-4 text-center">
                       <Badge variant={
                         item.risk_level === "Critical" ? "destructive" : 
@@ -402,7 +412,7 @@ export default function EOLIPs() {
 
         {/* Chart - Right Side */}
         <div className="chart-container">
-          <h3 className="text-lg font-semibold mb-4">Top 10 IPs by SEoL Component Count</h3>
+          <h3 className="text-lg font-semibold mb-4">Top 10 IPs by Unique EOL Vulnerabilities</h3>
           <div className="h-96">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={topIPsForChart} layout="vertical" margin={{ top: 5, right: 30, left: 120, bottom: 5 }}>
@@ -416,9 +426,9 @@ export default function EOLIPs() {
                     borderRadius: "8px"
                   }}
                   labelFormatter={(value) => `IP: ${value}`}
-                  formatter={(value, name) => [`${value}`, "SEoL Components"]}
+                  formatter={(value, name) => [`${value}`, "EOL Vulnerabilities"]}
                 />
-                <Bar dataKey="seol_component_count" fill="#ef4444" />
+                <Bar dataKey="unique_eol_vulnerabilities" fill="#ef4444" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -428,7 +438,7 @@ export default function EOLIPs() {
       {/* Complete List - Full Width */}
       <div className="chart-container">
         <div className="flex justify-between items-start mb-4">
-          <h3 className="text-lg font-semibold">Complete List of All IPs with SEoL Components</h3>
+          <h3 className="text-lg font-semibold">Complete List of All IPs with EOL Vulnerabilities</h3>
           <div className="flex items-center gap-2">
             <Button
               variant={selectedRiskLevel === null ? "default" : "outline"}
@@ -448,7 +458,7 @@ export default function EOLIPs() {
               </Button>
               <div className="absolute right-0 mt-2 w-48 bg-background border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
                 <div className="py-1">
-                  {["Critical", "High", "Medium", "Low"].map((riskLevel) => (
+                  {uniqueRiskLevels.map((riskLevel) => (
                     <button
                       key={riskLevel}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-muted flex items-center justify-between ${
@@ -485,7 +495,7 @@ export default function EOLIPs() {
             <thead className="sticky top-0 bg-background">
               <tr className="border-b border-border">
                 <th className="text-left py-3 px-4">IP Address</th>
-                <th className="text-center py-3 px-4">SEoL Component Count</th>
+                <th className="text-center py-3 px-4">Unique EOL Vulnerabilities</th>
                 <th className="text-center py-3 px-4">Risk Level</th>
               </tr>
             </thead>
@@ -493,7 +503,7 @@ export default function EOLIPs() {
               {filteredIPData.map((item, index) => (
                 <tr key={index} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                   <td className="py-3 px-4 font-mono text-sm">{String(item.ip_address)}</td>
-                  <td className="py-3 px-4 text-center font-bold">{item.seol_component_count}</td>
+                  <td className="py-3 px-4 text-center font-bold">{item.unique_eol_vulnerabilities}</td>
                   <td className="py-3 px-4 text-center">
                     <Badge variant={
                       item.risk_level === "Critical" ? "destructive" : 
