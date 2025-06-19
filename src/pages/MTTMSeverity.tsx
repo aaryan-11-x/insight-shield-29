@@ -1,8 +1,10 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
-import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface MTTMSeverityData {
   average_mttm_days: number;
@@ -12,6 +14,20 @@ interface MTTMSeverityData {
   instance_id: UUID;
   run_id: string;
 }
+
+// Custom Tooltip for BarChart
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="p-2 rounded bg-gray-800 border border-gray-700 text-white text-xs">
+        <div className="font-semibold mb-1">{label}</div>
+        <div>Vulnerability Count: <span className="font-mono">{payload[0].value}</span></div>
+        <div>Average MTTM: <span className="font-mono">{payload[0].payload.averageMTTM.toFixed(1)}</span></div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function MTTMSeverity() {
   const { data: mttmData, isLoading } = useQuery({
@@ -35,6 +51,8 @@ export default function MTTMSeverity() {
     }
   });
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   // Transform data for chart display
   const chartData = mttmData?.map(item => ({
     severity: item.risk_severity,
@@ -42,8 +60,47 @@ export default function MTTMSeverity() {
     averageMTTM: item.average_mttm_days,
     color: item.risk_severity === "Critical" ? "#dc2626" :
            item.risk_severity === "High" ? "#ea580c" :
-           item.risk_severity === "Medium" ? "#ca8a04" : "#16a34a"
+           item.risk_severity === "Medium" ? "#facc15" : // yellow
+           item.risk_severity === "Low" ? "#16a34a" : "#6b7280"
   })) || [];
+
+  // Download handler for Excel
+  const handleDownloadSheet = async () => {
+    try {
+      setIsDownloading(true);
+      const instanceId = localStorage.getItem('currentInstanceId');
+      const runId = localStorage.getItem('currentRunId');
+      if (!instanceId || !runId) {
+        alert('Instance ID or Run ID not found');
+        return;
+      }
+      const sheetName = '2.4. MTTM by Severity';
+      const encodedSheetName = btoa(decodeURIComponent(encodeURIComponent(sheetName)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+      const response = await fetch(
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        { method: 'GET' }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to download file');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${sheetName.replace(/ /g, '_')}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      alert('Failed to download file. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -53,7 +110,23 @@ export default function MTTMSeverity() {
             <h1 className="text-3xl font-bold">MTTM by Severity</h1>
             <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
           </div>
-          <DownloadDropdown />
+          <Button 
+            onClick={handleDownloadSheet}
+            className="flex items-center gap-2"
+            disabled={isDownloading}
+          >
+            {isDownloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Downloading...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Download Sheet
+              </>
+            )}
+          </Button>
         </div>
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading MTTM data...</p>
@@ -69,7 +142,23 @@ export default function MTTMSeverity() {
           <h1 className="text-3xl font-bold">MTTM by Severity</h1>
           <p className="text-muted-foreground">Mean Time to Mitigation analysis by vulnerability severity</p>
         </div>
-        <DownloadDropdown />
+        <Button 
+          onClick={handleDownloadSheet}
+          className="flex items-center gap-2"
+          disabled={isDownloading}
+        >
+          {isDownloading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Downloading...
+            </>
+          ) : (
+            <>
+              <Download className="h-4 w-4" />
+              Download Sheet
+            </>
+          )}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -115,18 +204,15 @@ export default function MTTMSeverity() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="severity" stroke="#9ca3af" />
                 <YAxis stroke="#9ca3af" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: "#1f2937", 
-                    border: "1px solid #374151",
-                    borderRadius: "8px"
-                  }} 
-                />
+                <Tooltip content={<CustomTooltip />} />
                 <Bar 
-                  dataKey="vulnerabilityCount" 
-                  fill="#16a34a"
+                  dataKey="vulnerabilityCount"
                   radius={[4, 4, 0, 0]}
-                />
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

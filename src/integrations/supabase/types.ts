@@ -788,28 +788,40 @@ export type Database = {
       }
       remediation_insights: {
         Row: {
-          id: number
-          instance_id: string
-          run_id: string
-          observations_impacted: number
-          percentage: number | null
-          remediation: string
+          rank: number;
+          remediation: string;
+          critical: number;
+          high: number;
+          low: number;
+          medium: number;
+          none: number;
+          total_vulnerabilities_closed: number;
+          instance_id: string;
+          run_id: string;
         }
         Insert: {
-          id?: number
-          instance_id: string
-          run_id: string
-          observations_impacted: number
-          percentage?: number | null
-          remediation: string
+          rank: number;
+          remediation: string;
+          critical: number;
+          high: number;
+          low: number;
+          medium: number;
+          none: number;
+          total_vulnerabilities_closed: number;
+          instance_id: string;
+          run_id: string;
         }
         Update: {
-          id?: number
-          instance_id?: string
-          run_id?: string
-          observations_impacted?: number
-          percentage?: number | null
-          remediation?: string
+          rank?: number;
+          remediation?: string;
+          critical?: number;
+          high?: number;
+          low?: number;
+          medium?: number;
+          none?: number;
+          total_vulnerabilties_closed?: number;
+          instance_id?: string;
+          run_id?: string;
         }
         Relationships: [
           {

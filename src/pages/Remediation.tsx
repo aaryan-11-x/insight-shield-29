@@ -1,18 +1,23 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import React from "react";
 import { UUID } from "crypto";
-import { DownloadDropdown } from "@/components/DownloadDropdown";
+import { Badge } from "@/components/ui/badge";
 
 interface RemediationData {
-  id: number;
-  observations_impacted: number;
-  percentage: number | null;
+  rank: number;
   remediation: string;
+  critical: number;
+  high: number;
+  low: number;
+  medium: number;
+  none: number;
+  total_vulnerabilities_closed: number;
   instance_id: UUID;
   run_id: string;
 }
@@ -31,7 +36,7 @@ export default function Remediation() {
         .select('*')
         .eq('instance_id', instanceId)
         .eq('run_id', runId)
-        .order('observations_impacted', { ascending: false });
+        .order('rank', { ascending: true });
       
       if (error) {
         console.error('Error fetching remediation data:', error);
@@ -139,6 +144,27 @@ export default function Remediation() {
     );
   }
 
+  // Compute summary stats for metric cards
+  const totalRemediations = remediationData ? remediationData.length : 0;
+  const totalClosed = remediationData ? remediationData.reduce((sum, item) => sum + (item.total_vulnerabilities_closed || 0), 0) : 0;
+  const criticalCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.critical || 0), 0) : 0;
+  const highCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.high || 0), 0) : 0;
+  const mediumCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.medium || 0), 0) : 0;
+  const lowCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.low || 0), 0) : 0;
+  const noneCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.none || 0), 0) : 0;
+
+  // Pagination logic
+  const ITEMS_PER_PAGE = 75;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = remediationData ? Math.ceil(remediationData.length / ITEMS_PER_PAGE) : 1;
+  const paginatedData = useMemo(() => {
+    if (!remediationData) return [];
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return remediationData.slice(start, start + ITEMS_PER_PAGE);
+  }, [remediationData, currentPage]);
+  // Reset to first page if data changes
+  React.useEffect(() => { setCurrentPage(1); }, [remediationData]);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -165,35 +191,101 @@ export default function Remediation() {
         </Button>
       </div>
 
+      {/* Summary Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+        <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">Total Remediations</p><p className="text-2xl font-bold">{totalRemediations}</p></div></div>
+        <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">Total Closed</p><p className="text-2xl font-bold">{totalClosed}</p></div></div>
+        <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">Critical</p><p className="text-2xl font-bold text-red-500">{criticalCount}</p></div></div>
+        <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">High</p><p className="text-2xl font-bold text-orange-500">{highCount}</p></div></div>
+        <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">Medium</p><p className="text-2xl font-bold text-yellow-500">{mediumCount}</p></div></div>
+        <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">Low/None</p><p className="text-2xl font-bold text-green-500">{lowCount + noneCount}</p></div></div>
+      </div>
+
       {/* Remediation Insights Table */}
-      <div className="chart-container">
-        <h3 className="text-lg font-semibold mb-4">Remediations by Observations</h3>
+      <div className="chart-container bg-muted/40 rounded-lg p-4">
+        <h3 className="text-xl font-semibold mb-4 text-primary">Remediations by Observations</h3>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm rounded-lg overflow-hidden">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="border-b border-border bg-muted/60">
+                <th className="text-center py-3 px-4">Rank</th>
                 <th className="text-left py-3 px-4">Remediation</th>
-                <th className="text-center py-3 px-4">Observations Impacted</th>
-                <th className="text-center py-3 px-4">Percentage</th>
+                <th className="text-center py-3 px-4">Critical</th>
+                <th className="text-center py-3 px-4">High</th>
+                <th className="text-center py-3 px-4">Medium</th>
+                <th className="text-center py-3 px-4">Low</th>
+                <th className="text-center py-3 px-4">None</th>
+                <th className="text-center py-3 px-4">Total Vulnerabilities Closed</th>
               </tr>
             </thead>
             <tbody>
-              {remediationData?.map((item, index) => (
-                <tr key={index} className="border-b border-border/50 hover:bg-muted/20">
-                  <td className="py-3 px-4">
-                    <div className="max-w-md">
-                      <p className="text-sm">{item.remediation}</p>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-center font-bold">{item.observations_impacted}</td>
-                  <td className="py-3 px-4 text-center">
-                    {item.percentage ? `${item.percentage.toFixed(1)}%` : "—"}
+              {paginatedData && paginatedData.length > 0 ? (
+                paginatedData.map((item: any, index: number) => {
+                  // Type guard: check if item has the new properties
+                  const hasNewProps =
+                    typeof item.rank === 'number' &&
+                    typeof item.critical === 'number' &&
+                    typeof item.high === 'number' &&
+                    typeof item.medium === 'number' &&
+                    typeof item.low === 'number' &&
+                    typeof item.none === 'number' &&
+                    typeof item.total_vulnerabilities_closed === 'number';
+                  if (!hasNewProps) return null;
+                  return (
+                    <tr key={index} className={
+                      `border-b border-border/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'} hover:bg-primary/10 transition-colors`
+                    }>
+                      <td className="py-3 px-4 text-center font-semibold text-muted-foreground">{item.rank}</td>
+                      <td className="py-3 px-4">
+                        <div className="max-w-md">
+                          <p className="text-sm font-medium text-foreground whitespace-pre-line">{item.remediation}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center"><Badge variant="destructive">{item.critical}</Badge></td>
+                      <td className="py-3 px-4 text-center"><Badge variant="default" style={{backgroundColor:'#ff9800',color:'#fff'}}>{item.high}</Badge></td>
+                      <td className="py-3 px-4 text-center"><Badge variant="default" style={{backgroundColor:'#ffe066',color:'#333'}}>{item.medium}</Badge></td>
+                      <td className="py-3 px-4 text-center"><Badge variant="default" style={{backgroundColor:'#4caf50',color:'#fff'}}>{item.low}</Badge></td>
+                      <td className="py-3 px-4 text-center"><Badge variant="secondary">{item.none}</Badge></td>
+                      <td className="py-3 px-4 text-center font-bold text-primary">{item.total_vulnerabilities_closed}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8} className="py-4 text-center text-muted-foreground">
+                    No remediation data available.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, remediationData ? remediationData.length : 0)} of {remediationData ? remediationData.length : 0} entries
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -209,13 +209,13 @@ export default function SelectInstance() {
                         <h3 className="font-semibold">{instance.name}</h3>
                         <div className="flex items-center gap-2">
                           {userRole === 'superuser' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => handleEdit(instance, e)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => handleEdit(instance, e)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                           )}
                           <Badge variant={instance.status === "active" ? "default" : "secondary"}>
                             {instance.status}
@@ -229,17 +229,17 @@ export default function SelectInstance() {
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium">Available Runs</h4>
                           {userRole === 'superuser' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent instance selection when clicking the button
-                                handleUploadNewRun(instance.instance_id);
-                              }}
-                            >
-                              <Upload className="h-4 w-4 mr-2" />
-                              Upload New Run
-                            </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent instance selection when clicking the button
+                              handleUploadNewRun(instance.instance_id);
+                            }}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload New Run
+                          </Button>
                           )}
                         </div>
                         <RadioGroup
