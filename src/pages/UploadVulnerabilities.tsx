@@ -65,7 +65,7 @@ export default function UploadVulnerabilities() {
 
     if (isUploading) {
       // Calculate interval based on total steps and expected duration
-      const totalDuration = 65000; // 65 seconds in milliseconds
+      const totalDuration = 100000; // 100 seconds in milliseconds
       const intervalTime = Math.floor(totalDuration / steps.length);
       
       interval = setInterval(() => {
@@ -226,7 +226,7 @@ export default function UploadVulnerabilities() {
         });
       });
 
-      xhr.open('POST', 'http://localhost:8000/api/v1/analyze');
+      xhr.open('POST', 'http://192.168.89.143/api/v1/analyze');
       // Add the instance ID and run ID headers
       xhr.setRequestHeader('X-Current-Instance-Id', instanceId);
       xhr.setRequestHeader('X-Current-Run-Id', runId);

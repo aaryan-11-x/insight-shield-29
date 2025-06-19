@@ -73,7 +73,7 @@ export default function Remediation() {
 
       // Make the API request
       const response = await fetch(
-        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        `http://192.168.89.143/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
         {
           method: 'GET',
         }
@@ -110,6 +110,25 @@ export default function Remediation() {
       setIsDownloading(false);
     }
   };
+
+  const ITEMS_PER_PAGE = 75;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = remediationData ? Math.ceil(remediationData.length / ITEMS_PER_PAGE) : 1;
+  const paginatedData = useMemo(() => {
+    if (!remediationData) return [];
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return remediationData.slice(start, start + ITEMS_PER_PAGE);
+  }, [remediationData, currentPage]);
+  // Reset to first page if data changes
+  React.useEffect(() => { setCurrentPage(1); }, [remediationData]);
+
+  // Top 10 Remediations by Critical Vulnerabilities Closed (useMemo for stability)
+  const topCriticalRemediations = useMemo(() => {
+    if (!remediationData) return [];
+    return [...remediationData]
+      .sort((a, b) => b.critical - a.critical)
+      .slice(0, 10);
+  }, [remediationData]);
 
   if (isLoading) {
     return (
@@ -153,18 +172,6 @@ export default function Remediation() {
   const lowCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.low || 0), 0) : 0;
   const noneCount = remediationData ? remediationData.reduce((sum, item) => sum + (item.none || 0), 0) : 0;
 
-  // Pagination logic
-  const ITEMS_PER_PAGE = 75;
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = remediationData ? Math.ceil(remediationData.length / ITEMS_PER_PAGE) : 1;
-  const paginatedData = useMemo(() => {
-    if (!remediationData) return [];
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return remediationData.slice(start, start + ITEMS_PER_PAGE);
-  }, [remediationData, currentPage]);
-  // Reset to first page if data changes
-  React.useEffect(() => { setCurrentPage(1); }, [remediationData]);
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -201,6 +208,34 @@ export default function Remediation() {
         <div className="metric-card"><div className="space-y-2"><p className="text-sm font-medium text-muted-foreground">Low/None</p><p className="text-2xl font-bold text-green-500">{lowCount + noneCount}</p></div></div>
       </div>
 
+      {/* Top 10 Remediations by Critical Vulnerabilities Closed Chart */}
+      <div className="chart-container bg-card border rounded-lg p-6 mb-6">
+        <h3 className="text-lg font-semibold mb-4 text-card-foreground">Top 10 Remediations by Critical Vulnerabilities Closed</h3>
+        <div className="h-96">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={topCriticalRemediations}
+              layout="vertical"
+              margin={{ top: 20, right: 30, left: 120, bottom: 20 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis type="number" stroke="#9ca3af" />
+              <YAxis type="category" dataKey="remediation" stroke="#9ca3af" fontSize={12} width={200} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#1f2937",
+                  border: "1px solid #374151",
+                  borderRadius: "8px",
+                  color: "#ffffff"
+                }}
+                formatter={(value, name) => [value, "Critical Closed"]}
+              />
+              <Bar dataKey="critical" fill="#ef4444" radius={[4, 4, 4, 4]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* Remediation Insights Table */}
       <div className="chart-container bg-muted/40 rounded-lg p-4">
         <h3 className="text-xl font-semibold mb-4 text-primary">Remediations by Observations</h3>
@@ -208,7 +243,6 @@ export default function Remediation() {
           <table className="w-full text-sm rounded-lg overflow-hidden">
             <thead>
               <tr className="border-b border-border bg-muted/60">
-                <th className="text-center py-3 px-4">Rank</th>
                 <th className="text-left py-3 px-4">Remediation</th>
                 <th className="text-center py-3 px-4">Critical</th>
                 <th className="text-center py-3 px-4">High</th>
@@ -235,7 +269,6 @@ export default function Remediation() {
                     <tr key={index} className={
                       `border-b border-border/50 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'} hover:bg-primary/10 transition-colors`
                     }>
-                      <td className="py-3 px-4 text-center font-semibold text-muted-foreground">{item.rank}</td>
                       <td className="py-3 px-4">
                         <div className="max-w-md">
                           <p className="text-sm font-medium text-foreground whitespace-pre-line">{item.remediation}</p>
@@ -252,7 +285,7 @@ export default function Remediation() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-4 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-4 text-center text-muted-foreground">
                     No remediation data available.
                   </td>
                 </tr>
