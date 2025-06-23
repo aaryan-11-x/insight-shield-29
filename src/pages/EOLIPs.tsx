@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { UUID } from "crypto";
-import { DownloadDropdown } from "@/components/DownloadDropdown";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2, ChevronDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -186,6 +185,18 @@ export default function EOLIPs() {
         <div className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">Loading EOL IP data...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (eolIPData && eolIPData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="rounded-full bg-muted p-6 mb-4 shadow">
+          <ChevronDown className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">No EOL IP data available</h2>
+        <p className="text-muted-foreground text-center max-w-md">There are no IPs with end-of-life vulnerabilities for the selected instance and run. Try uploading new data or selecting a different run.</p>
       </div>
     );
   }

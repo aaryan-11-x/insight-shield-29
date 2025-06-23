@@ -192,6 +192,18 @@ export default function EOLVersions() {
     );
   }
 
+  if (eolVersionData && eolVersionData.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="rounded-full bg-muted p-6 mb-4 shadow">
+          <ChevronDown className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">No EOL Versions data available</h2>
+        <p className="text-muted-foreground text-center max-w-md">There are no end-of-life software versions for the selected instance and run. Try uploading new data or selecting a different run.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

@@ -109,6 +109,22 @@ export default function EOLSummary() {
     );
   }
 
+  if (
+    Array.isArray(eolComponentsData) && eolComponentsData.length === 0 &&
+    Array.isArray(eolIpData) && eolIpData.length === 0 &&
+    Array.isArray(eolVersionsData) && eolVersionsData.length === 0
+  ) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="rounded-full bg-muted p-6 mb-4 shadow">
+          <Download className="h-10 w-10 text-muted-foreground" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">No EOL summary data available</h2>
+        <p className="text-muted-foreground text-center max-w-md">There is no end-of-life summary data for the selected instance and run. Try uploading new data or selecting a different run.</p>
+      </div>
+    );
+  }
+
   // Calculate metrics from the actual data
   const totalUniqueComponents = eolComponentsData.length;
   const softwareTypesAffected = new Set(eolComponentsData.map(item => item.software)).size;

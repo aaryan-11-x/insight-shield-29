@@ -29,6 +29,8 @@ export default function UploadVulnerabilities() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [pendingResult, setPendingResult] = useState<AnalysisResponse | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,6 +65,7 @@ export default function UploadVulnerabilities() {
     let stepIndex = 0;
     let interval: NodeJS.Timeout;
     let progressInterval: NodeJS.Timeout;
+    let fastForwardTimeout: NodeJS.Timeout;
 
     if (isUploading) {
       // Calculate interval based on total steps and expected duration
@@ -81,20 +84,50 @@ export default function UploadVulnerabilities() {
           setAnalysisProgress(0);
         }
         
-        if (isAnalyzing && analysisProgress < 100) {
+        if (isAnalyzing && analysisProgress < 99) {
           setAnalysisProgress(prev => {
-            const newProgress = prev + (100 / (totalDuration / 1000));
-            return newProgress > 100 ? 100 : newProgress;
+            const newProgress = prev + (99 / (totalDuration / 1000));
+            return newProgress > 99 ? 99 : newProgress;
           });
         }
       }, 1000);
     }
 
+    // Fast-forward logic: if API result is pending and progress < 99, animate to 99 then redirect
+    if (shouldRedirect && pendingResult) {
+      if (analysisProgress < 99) {
+        setAnalysisProgress(99);
+        fastForwardTimeout = setTimeout(() => {
+          // Show the static message for a moment before redirect
+          setTimeout(() => {
+            localStorage.setItem('analysisResults', JSON.stringify(pendingResult));
+            setUploadProgress(100);
+            // Show success toast
+            toast({
+              title: "Success",
+              description: "File uploaded and analyzed successfully!",
+            });
+            navigate("/dashboard", { replace: true });
+          }, 800);
+        }, 400);
+      } else {
+        // Already at 99, proceed immediately
+        localStorage.setItem('analysisResults', JSON.stringify(pendingResult));
+        setUploadProgress(100);
+        toast({
+          title: "Success",
+          description: "File uploaded and analyzed successfully!",
+        });
+        navigate("/dashboard", { replace: true });
+      }
+    }
+
     return () => {
       if (interval) clearInterval(interval);
       if (progressInterval) clearInterval(progressInterval);
+      if (fastForwardTimeout) clearTimeout(fastForwardTimeout);
     };
-  }, [isUploading, uploadProgress, isAnalyzing]);
+  }, [isUploading, uploadProgress, isAnalyzing, analysisProgress, shouldRedirect, pendingResult, toast, navigate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -259,22 +292,10 @@ export default function UploadVulnerabilities() {
       const result = await uploadPromise;
       console.log('Analysis result:', result);
       
-      // Store the analysis results in localStorage or state management
-      localStorage.setItem('analysisResults', JSON.stringify(result));
-      
-      // Set progress to 100% before redirecting
-      setUploadProgress(100);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to show 100%
-      
-      // Show success toast
-      toast({
-        title: "Success",
-        description: "File uploaded and analyzed successfully!",
-      });
-      
-      // Ensure we're in a valid state before redirecting
       if (result.status === 'success' && result.redirect) {
-        navigate("/dashboard", { replace: true });
+        // If progress is less than 99, fast-forward and then redirect
+        setPendingResult(result);
+        setShouldRedirect(true);
       } else {
         throw new Error('Invalid response format from server');
       }
@@ -317,7 +338,7 @@ export default function UploadVulnerabilities() {
           <CardContent className="space-y-6">
             <div className="border-2 border-dashed border-muted rounded-lg p-8 text-center">
               <div className="flex flex-col items-center space-y-4">
-                <div className="rounded-full bg-muted p-4">
+                <div className="rounded-full bg-muted p-4 shadow-lg">
                   <Upload className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <div>
@@ -355,7 +376,7 @@ export default function UploadVulnerabilities() {
             )}
 
             {isUploading && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {uploadProgress < 100 ? (
                   <>
                     <div className="space-y-2">
@@ -375,11 +396,13 @@ export default function UploadVulnerabilities() {
                       </div>
                       <Progress value={analysisProgress} className="h-2" />
                     </div>
+                    <p className="text-sm text-muted-foreground text-center animate-none font-medium mt-2">
+                      {analysisProgress >= 99
+                        ? 'Finalizing analysis, please wait...'
+                        : currentStep}
+                    </p>
                   </>
                 )}
-                <p className="text-sm text-muted-foreground text-center animate-pulse">
-                  {currentStep}
-                </p>
               </div>
             )}
 

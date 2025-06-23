@@ -319,8 +319,9 @@ export function AppSidebar() {
             variant="ghost"
             className="w-full justify-start gap-3 px-3"
             onClick={() => {
-              localStorage.removeItem('currentInstanceId');
-              localStorage.removeItem('currentRunId');
+              if (typeof window !== 'undefined') {
+                sessionStorage.setItem('fromDashboard', 'true');
+              }
               navigate('/select-instance');
             }}
           >

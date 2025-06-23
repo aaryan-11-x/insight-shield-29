@@ -385,7 +385,6 @@ export default function RiskTrajectory() {
                 <tr className="border-b bg-muted/50">
                   <th className="text-left py-4 px-6 font-semibold">Timestamp</th>
                   <th className="text-center py-4 px-6 font-semibold">Total Vulnerabilities</th>
-                  <th className="text-center py-4 px-6 font-semibold">Run ID</th>
               </tr>
             </thead>
             <tbody>
@@ -393,7 +392,6 @@ export default function RiskTrajectory() {
                   <tr key={index} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                     <td className="py-4 px-6 font-mono text-sm font-medium">{item.timestamp}</td>
                     <td className="py-4 px-6 text-center font-bold text-lg">{item.totalVulnerabilities.toLocaleString()}</td>
-                    <td className="py-4 px-6 text-center text-xs text-muted-foreground font-mono bg-muted/30 rounded px-2 py-1">{item.run_id}</td>
                 </tr>
               ))}
             </tbody>
@@ -449,7 +447,6 @@ export default function RiskTrajectory() {
                   <th className="text-center py-4 px-6 font-semibold">High</th>
                   <th className="text-center py-4 px-6 font-semibold">Medium</th>
                   <th className="text-center py-4 px-6 font-semibold">Low</th>
-                  <th className="text-center py-4 px-6 font-semibold">Run ID</th>
               </tr>
             </thead>
             <tbody>
@@ -460,7 +457,6 @@ export default function RiskTrajectory() {
                     <td className="py-4 px-6 text-center text-orange-500 font-bold text-lg">{item.high.toLocaleString()}</td>
                     <td className="py-4 px-6 text-center text-yellow-500 font-bold text-lg">{item.medium.toLocaleString()}</td>
                     <td className="py-4 px-6 text-center text-green-500 font-bold text-lg">{item.low.toLocaleString()}</td>
-                    <td className="py-4 px-6 text-center text-xs text-muted-foreground font-mono bg-muted/30 rounded px-2 py-1">{item.run_id}</td>
                 </tr>
               ))}
             </tbody>

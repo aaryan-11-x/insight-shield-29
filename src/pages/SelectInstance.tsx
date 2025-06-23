@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
-import { Server, Shield, AlertTriangle, ArrowLeft, Upload, Pencil } from "lucide-react";
+import { Server, Shield, AlertTriangle, ArrowLeft, Upload, Pencil, LayoutDashboard } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +37,18 @@ interface Run {
   status: string;
 }
 
+// Helper to check if navigation came from dashboard via sidebar button
+function cameFromDashboard() {
+  if (typeof window !== 'undefined') {
+    const flag = sessionStorage.getItem('fromDashboard');
+    if (flag === 'true') {
+      sessionStorage.removeItem('fromDashboard');
+      return true;
+    }
+  }
+  return false;
+}
+
 export default function SelectInstance() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,6 +60,7 @@ export default function SelectInstance() {
   const [editingInstance, setEditingInstance] = useState<Instance | null>(null);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [showDashboardBack, setShowDashboardBack] = useState(false);
 
   const { data: instances, isLoading } = useQuery({
     queryKey: ['instances'],
@@ -142,6 +155,10 @@ export default function SelectInstance() {
     navigate("/instance-choice");
   };
 
+  useEffect(() => {
+    setShowDashboardBack(cameFromDashboard());
+  }, []);
+
   const getRiskColor = (risk: string) => {
     switch (risk) {
       case "high": return "text-red-400";
@@ -171,14 +188,25 @@ export default function SelectInstance() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto">
-        <Button 
-          variant="ghost" 
-          className="mb-6" 
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Instance Choice
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={handleBack}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Instance Choice
+          </Button>
+          {showDashboardBack && (
+            <Button
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          )}
+        </div>
 
         <Card>
           <CardHeader>

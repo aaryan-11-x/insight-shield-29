@@ -36,6 +36,7 @@ export default function UniqueVulnerabilities() {
   const [isKEVDialogOpen, setIsKEVDialogOpen] = useState(false);
   const [isCVEDialogOpen, setIsCVEDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [selectedSeverity, setSelectedSeverity] = useState<string | null>(null);
 
   const { data: uniqueVulnerabilities, isLoading } = useQuery({
     queryKey: ['unique-vulnerabilities'],
@@ -129,22 +130,25 @@ export default function UniqueVulnerabilities() {
         return b.affected_hosts - a.affected_hosts;
       });
 
-    // Sort vulnerabilities: CVE first, then by CVE year (oldest first)
-    const sortedVulnerabilities = [...uniqueVulnerabilities].sort((a, b) => {
-      // First sort by having CVE
-      if (a.cve && !b.cve) return -1;
-      if (!a.cve && b.cve) return 1;
-      
-      // If both have CVE, sort by CVE year (oldest first)
+    // Sort vulnerabilities: by severity, then by CVE year (oldest first)
+    const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+    let filtered = uniqueVulnerabilities;
+    if (selectedSeverity) {
+      filtered = uniqueVulnerabilities.filter(v => v.severity === selectedSeverity);
+    }
+    const sortedVulnerabilities = [...filtered].sort((a, b) => {
+      // First sort by severity
+      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+      if (severityDiff !== 0) return severityDiff;
+      // Then by CVE year (oldest first)
       if (a.cve && b.cve) {
         const yearA = parseInt(a.cve.split('-')[1]);
         const yearB = parseInt(b.cve.split('-')[1]);
         return yearA - yearB;
       }
-      
-      // If neither has CVE, sort by severity
-      const severityOrder = { Critical: 0, High: 1, Medium: 2, Low: 3 };
-      return severityOrder[a.severity] - severityOrder[b.severity];
+      if (a.cve && !b.cve) return -1;
+      if (!a.cve && b.cve) return 1;
+      return 0;
     });
 
     // Pagination
@@ -163,7 +167,7 @@ export default function UniqueVulnerabilities() {
       kevListedVulnerabilities,
       cveVulnerabilities
     };
-  }, [uniqueVulnerabilities, currentPage]);
+  }, [uniqueVulnerabilities, currentPage, selectedSeverity]);
 
   const handleDownloadSheet = async () => {
     try {
@@ -490,6 +494,26 @@ export default function UniqueVulnerabilities() {
       {/* Detailed Vulnerabilities Table */}
       <div className="chart-container" id="vulnerability-analysis-table">
         <h3 className="text-lg font-semibold mb-4">Detailed Vulnerability Analysis</h3>
+        {/* Severity Filter */}
+        <div className="flex items-center gap-2 mb-4">
+          <Button
+            variant={selectedSeverity === null ? "default" : "outline"}
+            size="sm"
+            onClick={() => setSelectedSeverity(null)}
+          >
+            All Severities
+          </Button>
+          {['Critical', 'High', 'Medium', 'Low'].map((severity) => (
+            <Button
+              key={severity}
+              variant={selectedSeverity === severity ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedSeverity(severity)}
+            >
+              {severity}
+            </Button>
+          ))}
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
