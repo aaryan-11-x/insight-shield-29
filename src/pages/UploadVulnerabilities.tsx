@@ -52,6 +52,7 @@ export default function UploadVulnerabilities() {
     "Preparing CVE Summary page...",
     "Preparing Hosts Summary page...",
     "Preparing SEoL Components page...",
+    "Preparing EOL Components Page",
     "Preparing EOL IPs page...",
     "Preparing EOL Versions page...",
     "Preparing final report...",
@@ -226,7 +227,7 @@ export default function UploadVulnerabilities() {
         });
       });
 
-      xhr.open('POST', 'http://192.168.89.143:8000/api/v1/analyze');
+      xhr.open('POST', 'http://localhost:8000/api/v1/analyze');
       // Add the instance ID and run ID headers
       xhr.setRequestHeader('X-Current-Instance-Id', instanceId);
       xhr.setRequestHeader('X-Current-Run-Id', runId);

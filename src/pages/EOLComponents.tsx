@@ -155,7 +155,7 @@ export default function EOLComponents() {
 
       // Make the API request
       const response = await fetch(
-        `http://192.168.89.143:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
         {
           method: 'GET',
         }
