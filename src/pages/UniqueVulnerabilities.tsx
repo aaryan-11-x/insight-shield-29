@@ -195,7 +195,7 @@ export default function UniqueVulnerabilities() {
 
       // Make the API request
       const response = await fetch(
-        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        `http://192.168.1.102:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
         {
           method: 'GET',
         }

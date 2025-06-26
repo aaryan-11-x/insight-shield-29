@@ -58,6 +58,46 @@ const features = [
 export default function Index() {
   const navigate = useNavigate();
   const [isVisible, setIsVisible] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+
+  const workflowSteps = [
+    {
+      icon: FileText,
+      title: "Data Ingestion",
+      description: "Upload your raw data into Insight Shield.",
+      color: "text-blue-400"
+    },
+    {
+      icon: Database,
+      title: "Data Enrichment",
+      description: "Insight Shield adds risk scores and important details automatically.",
+      color: "text-purple-400"
+    },
+    {
+      icon: Zap,
+      title: "AI & Python Analysis",
+      description: "Advanced algorithms analyze your data for deeper insights.",
+      color: "text-green-400"
+    },
+    {
+      icon: Target,
+      title: "Insights Generation",
+      description: "Get clear, actionable advice based on the analysis.",
+      color: "text-orange-400"
+    },
+    {
+      icon: BarChart,
+      title: "Interactive Dashboards",
+      description: "See your data in easy-to-understand charts and dashboards.",
+      color: "text-cyan-400"
+    },
+    {
+      icon: CheckCircle,
+      title: "Custom Reports",
+      description: "Download reports tailored to your needs.",
+      color: "text-teal-400"
+    }
+  ];
 
   useEffect(() => {
     setIsVisible(true);
@@ -94,7 +134,7 @@ export default function Index() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                  InsightShield
+                  Insight Shield
                 </h1>
                 <p className="text-xs text-slate-400">KPMG Internal Platform</p>
               </div>
@@ -121,17 +161,12 @@ export default function Index() {
                   <span className="text-sm font-medium text-blue-300">KPMG Internal Security Platform</span>
                 </div>
                 <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                  <span className="bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent">
-                    Advanced Vulnerability
-                  </span>
-                  <br />
-                  <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    Management
+                  <span className="bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent font-bold italic underline">
+                    Empower Your Security Decisions
                   </span>
                 </h1>
                 <p className="text-xl text-slate-300 leading-relaxed">
-                  Transform your security posture with AI-powered vulnerability analysis, 
-                  automated risk scoring, and comprehensive reporting capabilities.
+                  <span className="font-bold italic underline">Insight Shield</span> is your one-stop platform for <span className="font-bold italic">smarter risk prioritization</span>. Easily manage and prioritize security risks with <span className="font-bold">clear, actionable insights</span>. So you always know what to fix first and how to fix it, <span className="font-bold italic">fast</span>.
                 </p>
               </div>
               
@@ -153,22 +188,6 @@ export default function Index() {
                   Watch Demo
                 </Button>
               </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 pt-8">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">99.9%</div>
-                  <div className="text-sm text-slate-400">Detection Rate</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">24/7</div>
-                  <div className="text-sm text-slate-400">Monitoring</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-white">10x</div>
-                  <div className="text-sm text-slate-400">Faster Analysis</div>
-                </div>
-              </div>
             </div>
 
             {/* Right Content - Mockup */}
@@ -181,7 +200,7 @@ export default function Index() {
                     <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
                     <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
                   </div>
-                  <div className="text-xs text-slate-400">InsightShield Dashboard</div>
+                  <div className="text-xs text-slate-400">Insight Shield Dashboard</div>
                 </div>
                 
                 {/* Content Grid */}
@@ -244,6 +263,54 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Workflow Section */}
+      <section className="max-w-6xl mx-auto px-4 py-14">
+        <h2 className="text-3xl lg:text-4xl font-bold text-center mb-14 italic">How Insight Shield works?</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          {workflowSteps.map((step, idx) => {
+            // Determine if this is the last step in the row
+            const isLastInRow = ((idx + 1) % 3 === 0) || (idx === workflowSteps.length - 1);
+            return (
+              <div
+                key={step.title}
+                className="flex flex-col items-center text-center min-w-[140px] max-w-xs w-full mx-auto group transition-all duration-300 ease-in-out cursor-pointer"
+                tabIndex={0}
+                style={{ background: 'none', margin: 0 }}
+              >
+                <span className="text-xs text-blue-300 font-semibold mb-2">Step {idx + 1}</span>
+                <div className={`flex items-center justify-center h-12 w-12 rounded-xl mb-4 bg-gradient-to-br transition-all duration-300 group-hover:scale-110 group-hover:shadow-xl group-focus:scale-110 group-focus:shadow-xl ${
+                  idx === 0 ? 'from-blue-500 to-cyan-500' :
+                  idx === 1 ? 'from-purple-500 to-pink-500' :
+                  idx === 2 ? 'from-green-500 to-emerald-500' :
+                  idx === 3 ? 'from-orange-500 to-red-500' :
+                  idx === 4 ? 'from-cyan-500 to-blue-500' :
+                  'from-teal-500 to-cyan-500'
+                }`}>
+                  <step.icon className="h-7 w-7 text-white" />
+                </div>
+                <span className="font-bold text-white text-lg mb-2 transition-colors duration-300 group-hover:text-blue-300 group-focus:text-blue-300">{step.title}</span>
+                <span className="text-slate-300 text-base leading-relaxed" style={{minHeight:'36px'}}>{step.description}</span>
+                {/* Right arrow for all but last in row */}
+                {!isLastInRow && (
+                  <div className="flex items-center justify-center mt-4">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id={`arrow-right-gradient-${idx}`} x1="0" y1="16" x2="32" y2="16" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#38bdf8" />
+                          <stop offset="1" stopColor="#a78bfa" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M8 16H24" stroke="url(#arrow-right-gradient-${idx})" strokeWidth="3" strokeLinecap="round"/>
+                      <path d="M20 12L24 16L20 20" stroke="url(#arrow-right-gradient-${idx})" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-7xl mx-auto">
@@ -252,8 +319,8 @@ export default function Index() {
               <Target className="h-4 w-4 text-emerald-400" />
               <span className="text-sm font-medium text-emerald-300">Powerful Features</span>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              Everything You Need
+            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent pb-2" style={{ lineHeight: '1.2', paddingBottom: '0.3em' }}>
+              <span className="italic">Everything You Need</span>
             </h2>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto">
               Comprehensive vulnerability management tools designed for KPMG security teams
@@ -294,13 +361,13 @@ export default function Index() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-full border border-orange-500/30">
                   <CheckCircle className="h-4 w-4 text-orange-400" />
-                  <span className="text-sm font-medium text-orange-300">Why Choose InsightShield</span>
+                  <span className="text-sm font-medium text-orange-300">Why Choose Insight Shield</span>
                 </div>
                 <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
                   Trusted by KPMG Security Teams
                 </h2>
                 <p className="text-xl text-slate-400">
-                  Join KPMG security professionals who rely on InsightShield for their vulnerability management needs.
+                  Join KPMG security professionals who rely on Insight Shield for their vulnerability management needs.
                 </p>
               </div>
               
@@ -381,14 +448,14 @@ export default function Index() {
               <Shield className="h-5 w-5 text-white" />
             </div>
             <span className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              InsightShield
+              Insight Shield
             </span>
           </div>
           <p className="text-slate-400 mb-2">
-            Advanced Vulnerability Management & Risk Assessment Platform
+            <span className="font-bold italic underline">Next-Gen Risk Prioritization & Assessment Platform</span>
           </p>
           <p className="text-sm text-slate-500">
-            © 2024 KPMG. Internal security platform for vulnerability management and risk assessment.
+            © {new Date().getFullYear()} KPMG. Internal security platform for vulnerability management and risk assessment.
           </p>
         </div>
       </footer>
