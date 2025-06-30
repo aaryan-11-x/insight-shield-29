@@ -27,7 +27,7 @@ export function DownloadDropdown({ onDownloadExcel, onDownloadPDF, buttonText }:
         throw new Error('Instance ID or Run ID not found');
       }
 
-      const response = await fetch(`http://192.168.1.102:8000/api/v1/download/${instanceId}/${runId}`);
+      const response = await fetch(`http://localhost:8000/api/v1/download/${instanceId}/${runId}`);
       
       if (!response.ok) {
         throw new Error('Failed to download file');

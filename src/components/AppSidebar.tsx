@@ -1,4 +1,4 @@
-import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, TrendingUp, AlertTriangle, RefreshCw, UserCog, Package, GitBranch, History } from "lucide-react";
+import { Shield, BarChart, Target, Wrench, Grid2x2, Database, FileText, Calendar, TrendingUp, AlertTriangle, RefreshCw, UserCog, Package, GitBranch, History, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -85,10 +85,10 @@ const menuItems = [
         title: "Patch Details",
         url: "/dashboard/patch-details",
       },
-      {
+      /* {
         title: "MTTM by Severity",
         url: "/dashboard/mttm-severity",
-      },
+      }, */
     ],
   },
   {
@@ -285,6 +285,17 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-4 space-y-2">
+        <div>
+          <button
+            className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md hover:bg-muted/20 transition-colors ${
+              location.pathname === "/dashboard/instance-wide-insights" ? "bg-muted/30" : ""
+            }`}
+            onClick={() => navigate("/dashboard/instance-wide-insights")}
+          >
+            <Sparkles className="h-4 w-4" />
+            <span>Instance Wide Insights</span>
+          </button>
+        </div>
         <div className="p-2 border-t space-y-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -40,6 +40,7 @@ import Assets from "./pages/Assets";
 import NotFound from "./pages/NotFound";
 import AccessManagement from "./pages/AccessManagement";
 import RemediationDependencies from "./pages/RemediationDependencies";
+import InstanceWideInsights from "./pages/InstanceWideInsights";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
                       <Route path="/" element={<Dashboard />} />
                           <Route path="/access-management" element={<ProtectedRoute requireSuperuser><AccessManagement /></ProtectedRoute>} />
                       <Route path="/remediation-dependencies" element={<RemediationDependencies />} />
+                      <Route path="/instance-wide-insights" element={<InstanceWideInsights />} />
                       <Route path="/prioritization" element={<Prioritization />} />
                       <Route path="/exploitability" element={<Exploitability />} />
                       <Route path="/vulnerability-aging" element={<VulnerabilityAging />} />

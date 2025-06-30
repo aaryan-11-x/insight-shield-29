@@ -87,7 +87,7 @@ export default function HostsSummary() {
 
       // Make the API request
       const response = await fetch(
-        `http://192.168.1.102:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
+        `http://localhost:8000/api/v1/download-sheet/${instanceId}/${runId}/${encodedSheetName}`,
         {
           method: 'GET',
         }
